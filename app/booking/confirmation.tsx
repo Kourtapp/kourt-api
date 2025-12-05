@@ -1,0 +1,107 @@
+import { View, Text, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+
+export default function ConfirmationScreen() {
+  return (
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1 items-center justify-center px-5">
+        {/* Success Icon */}
+        <View className="w-24 h-24 bg-lime-500 rounded-full items-center justify-center mb-6">
+          <MaterialIcons name="check" size={48} color="#1A2E05" />
+        </View>
+
+        <Text className="text-2xl font-bold text-black text-center mb-2">
+          Reserva Confirmada!
+        </Text>
+        <Text className="text-sm text-neutral-500 text-center mb-8">
+          Você receberá uma confirmação por email e notificação.
+        </Text>
+
+        {/* Booking Details */}
+        <View className="w-full bg-neutral-50 rounded-2xl p-5 mb-8">
+          <View className="flex-row items-center mb-4">
+            <View className="w-12 h-12 bg-lime-100 rounded-xl items-center justify-center">
+              <MaterialIcons name="sports-tennis" size={24} color="#84CC16" />
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="font-semibold text-black">
+                Arena Beach Tennis
+              </Text>
+              <Text className="text-sm text-neutral-500">Beach Tennis</Text>
+            </View>
+          </View>
+
+          <View className="gap-3">
+            <View className="flex-row items-center gap-3">
+              <MaterialIcons name="event" size={20} color="#737373" />
+              <View>
+                <Text className="text-xs text-neutral-500">Data</Text>
+                <Text className="text-sm font-medium text-black">
+                  Hoje, 15 de Janeiro
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center gap-3">
+              <MaterialIcons name="schedule" size={20} color="#737373" />
+              <View>
+                <Text className="text-xs text-neutral-500">Horário</Text>
+                <Text className="text-sm font-medium text-black">
+                  18:00 - 19:00
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center gap-3">
+              <MaterialIcons name="location-on" size={20} color="#737373" />
+              <View>
+                <Text className="text-xs text-neutral-500">Local</Text>
+                <Text className="text-sm font-medium text-black">
+                  Rua das Palmeiras, 123
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="h-px bg-neutral-200 my-4" />
+
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-neutral-600">Total pago</Text>
+            <Text className="text-lg font-bold text-lime-600">R$ 80,00</Text>
+          </View>
+        </View>
+
+        {/* XP Gained */}
+        <View className="w-full bg-black rounded-2xl p-4 mb-8 flex-row items-center">
+          <View className="w-12 h-12 bg-lime-500 rounded-xl items-center justify-center">
+            <MaterialIcons name="star" size={24} color="#1A2E05" />
+          </View>
+          <View className="flex-1 ml-3">
+            <Text className="text-lime-500 font-bold">+50 XP</Text>
+            <Text className="text-white/60 text-sm">Reserva realizada!</Text>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View className="w-full gap-3">
+          <Pressable
+            onPress={() => router.push('/match/create' as any)}
+            className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-2"
+          >
+            <MaterialIcons name="group-add" size={20} color="#FFF" />
+            <Text className="text-white font-semibold">Criar Partida</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.replace('/(tabs)')}
+            className="w-full py-4 bg-neutral-100 rounded-2xl flex-row items-center justify-center"
+          >
+            <Text className="text-black font-semibold">Voltar ao Início</Text>
+          </Pressable>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}

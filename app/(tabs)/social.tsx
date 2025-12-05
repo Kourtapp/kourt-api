@@ -1,0 +1,491 @@
+import { View, Text, ScrollView, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const tabs = ['Feed', 'Partidas', 'Torneios'];
+
+const mockFeed = [
+  {
+    id: '1',
+    user: { name: 'Pedro Ferreira', avatar: null, username: '@pedrotennis' },
+    type: 'match_result',
+    content: {
+      sport: 'Beach Tennis',
+      result: 'Vitória',
+      score: '6-4, 6-3',
+      opponent: 'João Silva',
+      court: 'Arena Beach Tennis',
+    },
+    likes: 12,
+    comments: 3,
+    time: '2h',
+  },
+  {
+    id: '2',
+    user: { name: 'Marina Santos', avatar: null, username: '@marinapadel' },
+    type: 'achievement',
+    content: {
+      title: 'Primeira Vitória',
+      description: 'Conquistou sua primeira vitória no Padel!',
+      icon: 'emoji-events',
+    },
+    likes: 24,
+    comments: 8,
+    time: '5h',
+  },
+];
+
+const mockMatches = [
+  {
+    id: '1',
+    title: 'Beach Tennis Casual',
+    sport: 'Beach Tennis',
+    time: 'Hoje, 18:00',
+    location: 'Arena Beach Tennis',
+    spots: '3/4',
+    level: 'Intermediário',
+    organizer: 'Pedro F.',
+  },
+  {
+    id: '2',
+    title: 'Padel Duplas',
+    sport: 'Padel',
+    time: 'Amanhã, 10:00',
+    location: 'Padel Club SP',
+    spots: '2/4',
+    level: 'Iniciante',
+    organizer: 'Marina S.',
+  },
+];
+
+const mockTournaments = [
+  {
+    id: '1',
+    title: 'Copa Beach Tennis SP',
+    sport: 'Beach Tennis',
+    date: '15-17 Dez',
+    location: 'Arena Beach Ibirapuera',
+    prize: 'R$ 5.000',
+    participants: 32,
+    maxParticipants: 64,
+    entryFee: 'R$ 150',
+    level: 'Todos os níveis',
+    isPro: true,
+    status: 'inscricoes_abertas',
+  },
+  {
+    id: '2',
+    title: 'Torneio Padel Iniciantes',
+    sport: 'Padel',
+    date: '20 Dez',
+    location: 'Padel Club Jardins',
+    prize: null,
+    participants: 12,
+    maxParticipants: 16,
+    entryFee: 'Grátis',
+    level: 'Iniciante',
+    isPro: false,
+    status: 'inscricoes_abertas',
+  },
+  {
+    id: '3',
+    title: 'Circuito Verão Beach Tennis',
+    sport: 'Beach Tennis',
+    date: '5-7 Jan',
+    location: 'Riviera Beach Club',
+    prize: 'R$ 10.000',
+    participants: 48,
+    maxParticipants: 64,
+    entryFee: 'R$ 200',
+    level: 'Intermediário+',
+    isPro: true,
+    status: 'em_breve',
+  },
+  {
+    id: '4',
+    title: 'Torneio Social Tênis',
+    sport: 'Tênis',
+    date: '22 Dez',
+    location: 'Clube Harmonia',
+    prize: null,
+    participants: 8,
+    maxParticipants: 16,
+    entryFee: 'R$ 50',
+    level: 'Todos os níveis',
+    isPro: false,
+    status: 'inscricoes_abertas',
+  },
+];
+
+export default function SocialScreen() {
+  const [activeTab, setActiveTab] = useState(0);
+
+  return (
+    <SafeAreaView className="flex-1 bg-[#fafafa]">
+      {/* Header */}
+      <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-neutral-100">
+        <Text className="text-xl font-bold text-black">Social</Text>
+        <View className="flex-row gap-2">
+          <Pressable
+            onPress={() => router.push('/search' as any)}
+            className="w-10 h-10 bg-neutral-100 rounded-full items-center justify-center"
+          >
+            <MaterialIcons name="search" size={20} color="#000" />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/chat' as any)}
+            className="w-10 h-10 bg-neutral-100 rounded-full items-center justify-center"
+          >
+            <MaterialIcons name="chat" size={20} color="#000" />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View className="flex-row bg-white border-b border-neutral-100">
+        {tabs.map((tab, index) => (
+          <Pressable
+            key={tab}
+            onPress={() => setActiveTab(index)}
+            className={`flex-1 py-3 items-center border-b-2 ${
+              activeTab === index ? 'border-black' : 'border-transparent'
+            }`}
+          >
+            <Text
+              className={`text-sm font-medium ${
+                activeTab === index ? 'text-black' : 'text-neutral-500'
+              }`}
+            >
+              {tab}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Feed Tab */}
+        {activeTab === 0 && (
+          <View className="p-5 gap-4">
+            {mockFeed.map((post) => (
+              <View
+                key={post.id}
+                className="bg-white rounded-2xl border border-neutral-200 p-4"
+              >
+                {/* Header */}
+                <View className="flex-row items-center mb-3">
+                  <View className="w-10 h-10 bg-neutral-300 rounded-full items-center justify-center">
+                    <MaterialIcons name="person" size={20} color="#525252" />
+                  </View>
+                  <View className="flex-1 ml-3">
+                    <Text className="font-semibold text-black">
+                      {post.user.name}
+                    </Text>
+                    <Text className="text-xs text-neutral-500">
+                      {post.user.username} • {post.time}
+                    </Text>
+                  </View>
+                  <Pressable>
+                    <MaterialIcons
+                      name="more-horiz"
+                      size={20}
+                      color="#A3A3A3"
+                    />
+                  </Pressable>
+                </View>
+
+                {/* Content */}
+                {post.type === 'match_result' && (
+                  <View className="bg-lime-50 rounded-xl p-4 mb-3">
+                    <View className="flex-row items-center gap-2 mb-2">
+                      <MaterialIcons
+                        name="sports-tennis"
+                        size={16}
+                        color="#84CC16"
+                      />
+                      <Text className="text-sm font-medium text-lime-900">
+                        {post.content.sport}
+                      </Text>
+                      <View className="px-2 py-0.5 bg-lime-500 rounded-full">
+                        <Text className="text-xs font-bold text-lime-950">
+                          {post.content.result}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className="text-lg font-bold text-black">
+                      {post.content.score}
+                    </Text>
+                    <Text className="text-sm text-neutral-600">
+                      vs {post.content.opponent}
+                    </Text>
+                    <Text className="text-xs text-neutral-500 mt-1">
+                      {post.content.court}
+                    </Text>
+                  </View>
+                )}
+
+                {post.type === 'achievement' && (
+                  <View className="bg-amber-50 rounded-xl p-4 mb-3 flex-row items-center">
+                    <View className="w-12 h-12 bg-amber-500 rounded-xl items-center justify-center">
+                      <MaterialIcons
+                        name={post.content.icon as any}
+                        size={24}
+                        color="#FFF"
+                      />
+                    </View>
+                    <View className="flex-1 ml-3">
+                      <Text className="font-bold text-black">
+                        {post.content.title}
+                      </Text>
+                      <Text className="text-sm text-neutral-600">
+                        {post.content.description}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Actions */}
+                <View className="flex-row items-center gap-4">
+                  <Pressable className="flex-row items-center gap-1.5">
+                    <MaterialIcons
+                      name="favorite-border"
+                      size={20}
+                      color="#525252"
+                    />
+                    <Text className="text-sm text-neutral-600">
+                      {post.likes}
+                    </Text>
+                  </Pressable>
+                  <Pressable className="flex-row items-center gap-1.5">
+                    <MaterialIcons
+                      name="chat-bubble-outline"
+                      size={20}
+                      color="#525252"
+                    />
+                    <Text className="text-sm text-neutral-600">
+                      {post.comments}
+                    </Text>
+                  </Pressable>
+                  <Pressable className="flex-row items-center gap-1.5">
+                    <MaterialIcons name="share" size={20} color="#525252" />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Matches Tab */}
+        {activeTab === 1 && (
+          <View className="p-5 gap-3">
+            {mockMatches.map((match) => (
+              <Pressable
+                key={match.id}
+                onPress={() => router.push(`/match/${match.id}` as any)}
+                className="bg-white rounded-2xl border border-neutral-200 p-4"
+              >
+                <View className="flex-row items-start justify-between mb-3">
+                  <View>
+                    <Text className="font-semibold text-black">
+                      {match.title}
+                    </Text>
+                    <Text className="text-xs text-neutral-500 mt-0.5">
+                      {match.time}
+                    </Text>
+                  </View>
+                  <View className="px-3 py-1 bg-lime-100 rounded-full">
+                    <Text className="text-xs font-medium text-lime-800">
+                      {match.spots}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-center gap-4 mb-3">
+                  <View className="flex-row items-center gap-1.5">
+                    <MaterialIcons
+                      name="location-on"
+                      size={14}
+                      color="#737373"
+                    />
+                    <Text className="text-sm text-neutral-600">
+                      {match.location}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center gap-1.5">
+                    <MaterialIcons
+                      name="signal-cellular-alt"
+                      size={14}
+                      color="#737373"
+                    />
+                    <Text className="text-sm text-neutral-600">
+                      {match.level}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <View className="w-6 h-6 bg-neutral-200 rounded-full" />
+                    <Text className="text-xs text-neutral-500">
+                      Por {match.organizer}
+                    </Text>
+                  </View>
+                  <Pressable className="px-4 py-2 bg-black rounded-xl">
+                    <Text className="text-sm font-semibold text-white">
+                      Entrar
+                    </Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        {/* Tournaments Tab */}
+        {activeTab === 2 && (
+          <View className="p-5">
+            {/* Create Tournament Banner (PRO) */}
+            <Pressable
+              onPress={() => router.push('/tournament/create' as any)}
+              className="mb-4 rounded-2xl overflow-hidden"
+            >
+              <LinearGradient
+                colors={['#84CC16', '#65A30D']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="p-4 flex-row items-center"
+              >
+                <View className="w-12 h-12 bg-white/20 rounded-xl items-center justify-center">
+                  <MaterialIcons name="emoji-events" size={24} color="#fff" />
+                </View>
+                <View className="flex-1 ml-3">
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-base font-bold text-white">Criar Torneio</Text>
+                    <View className="px-2 py-0.5 bg-white/20 rounded">
+                      <Text className="text-[10px] font-bold text-white">PRO</Text>
+                    </View>
+                  </View>
+                  <Text className="text-sm text-white/80">Organize seu próprio campeonato</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#fff" />
+              </LinearGradient>
+            </Pressable>
+
+            {/* Filter chips */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+              <View className="flex-row gap-2">
+                {['Todos', 'Beach Tennis', 'Padel', 'Tênis', 'Grátis'].map((filter, idx) => (
+                  <Pressable
+                    key={filter}
+                    className={`px-4 py-2 rounded-full ${idx === 0 ? 'bg-black' : 'bg-white border border-neutral-200'}`}
+                  >
+                    <Text className={`text-sm font-medium ${idx === 0 ? 'text-white' : 'text-neutral-700'}`}>
+                      {filter}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+
+            {/* Tournaments list */}
+            <View className="gap-4">
+              {mockTournaments.map((tournament) => (
+                <Pressable
+                  key={tournament.id}
+                  onPress={() => router.push(`/tournament/${tournament.id}` as any)}
+                  className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
+                >
+                  {/* Tournament header image placeholder */}
+                  <View className="h-32 bg-neutral-200 items-center justify-center relative">
+                    <MaterialIcons name="emoji-events" size={40} color="#A3A3A3" />
+                    {tournament.isPro && (
+                      <View className="absolute top-3 right-3 px-2 py-1 bg-amber-500 rounded-full">
+                        <Text className="text-[10px] font-bold text-black">PRO</Text>
+                      </View>
+                    )}
+                    {tournament.status === 'inscricoes_abertas' && (
+                      <View className="absolute top-3 left-3 px-2 py-1 bg-lime-500 rounded-full">
+                        <Text className="text-[10px] font-bold text-white">Inscrições Abertas</Text>
+                      </View>
+                    )}
+                    {tournament.status === 'em_breve' && (
+                      <View className="absolute top-3 left-3 px-2 py-1 bg-blue-500 rounded-full">
+                        <Text className="text-[10px] font-bold text-white">Em Breve</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View className="p-4">
+                    <View className="flex-row items-start justify-between mb-2">
+                      <View className="flex-1">
+                        <Text className="text-lg font-bold text-black">{tournament.title}</Text>
+                        <View className="flex-row items-center gap-2 mt-1">
+                          <MaterialIcons name="sports-tennis" size={14} color="#737373" />
+                          <Text className="text-sm text-neutral-500">{tournament.sport}</Text>
+                          <Text className="text-neutral-300">•</Text>
+                          <Text className="text-sm text-neutral-500">{tournament.level}</Text>
+                        </View>
+                      </View>
+                      {tournament.prize && (
+                        <View className="px-3 py-1.5 bg-amber-100 rounded-lg">
+                          <Text className="text-sm font-bold text-amber-700">{tournament.prize}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Info row */}
+                    <View className="flex-row items-center gap-4 mb-3">
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons name="event" size={14} color="#737373" />
+                        <Text className="text-sm text-neutral-600">{tournament.date}</Text>
+                      </View>
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons name="place" size={14} color="#737373" />
+                        <Text className="text-sm text-neutral-600" numberOfLines={1}>{tournament.location}</Text>
+                      </View>
+                    </View>
+
+                    {/* Participants bar */}
+                    <View className="mb-3">
+                      <View className="flex-row items-center justify-between mb-1">
+                        <Text className="text-xs text-neutral-500">Participantes</Text>
+                        <Text className="text-xs font-medium text-neutral-700">
+                          {tournament.participants}/{tournament.maxParticipants}
+                        </Text>
+                      </View>
+                      <View className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                        <View
+                          className="h-full bg-lime-500 rounded-full"
+                          style={{ width: `${(tournament.participants / tournament.maxParticipants) * 100}%` }}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Bottom row */}
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons name="confirmation-number" size={16} color="#84CC16" />
+                        <Text className={`text-sm font-semibold ${tournament.entryFee === 'Grátis' ? 'text-lime-600' : 'text-neutral-700'}`}>
+                          {tournament.entryFee}
+                        </Text>
+                      </View>
+                      <Pressable className="px-4 py-2 bg-black rounded-xl">
+                        <Text className="text-sm font-semibold text-white">
+                          {tournament.status === 'inscricoes_abertas' ? 'Inscrever-se' : 'Ver detalhes'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        <View className="h-6" />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
