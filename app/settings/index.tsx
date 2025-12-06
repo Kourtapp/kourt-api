@@ -27,15 +27,9 @@ const menuSections = [
         route: '/settings/sports',
       },
       {
-        icon: 'location-on',
-        label: 'Localização',
-        route: '/settings/location',
-      },
-      {
-        icon: 'language',
-        label: 'Idioma',
-        route: '/settings/language',
-        value: 'Português',
+        icon: 'link',
+        label: 'Contas Vinculadas',
+        route: '/settings/linked-accounts',
       },
     ],
   },
@@ -107,11 +101,6 @@ export default function SettingsScreen() {
                   <Text className="flex-1 ml-3 text-black font-medium">
                     {item.label}
                   </Text>
-                  {item.value && (
-                    <Text className="text-sm text-neutral-500 mr-2">
-                      {item.value}
-                    </Text>
-                  )}
                   <MaterialIcons
                     name="chevron-right"
                     size={20}

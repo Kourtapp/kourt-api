@@ -4,6 +4,7 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,11 +15,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { CreateMatchInput } from '@/types/database.types';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Esportes ordenados por popularidade no Brasil
 const sports = [
-  { id: 'beach-tennis', name: 'BeachTennis', icon: 'sports-tennis' },
-  { id: 'padel', name: 'Padel', icon: 'sports-tennis' },
   { id: 'futebol', name: 'Futebol', icon: 'sports-soccer' },
   { id: 'volei', name: 'Vôlei', icon: 'sports-volleyball' },
+  { id: 'beach-tennis', name: 'Beach', icon: 'sports-tennis' },
+  { id: 'futevolei', name: 'Futevôlei', icon: 'sports-volleyball' },
+  { id: 'tenis', name: 'Tênis', icon: 'sports-tennis' },
+  { id: 'padel', name: 'Padel', icon: 'sports-tennis' },
+  { id: 'basquete', name: 'Basquete', icon: 'sports-basketball' },
 ];
 
 const durations = ['1h', '1h30', '2h', '2h30'];
@@ -27,6 +32,12 @@ const levels = [
   { id: 'beginner', label: 'Iniciante' },
   { id: 'intermediate', label: 'Intermed.' },
   { id: 'advanced', label: 'Avançado' },
+];
+
+const timeSlots = [
+  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+  '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+  '18:00', '19:00', '20:00', '21:00', '22:00',
 ];
 
 export default function CreateMatchScreen() {
@@ -44,7 +55,7 @@ export default function CreateMatchScreen() {
   };
 
   const [matchType, setMatchType] = useState<'casual' | 'ranked'>('casual');
-  const [selectedSport, setSelectedSport] = useState<string | null>('beach-tennis');
+  const [selectedSport, setSelectedSport] = useState<string | null>('futebol');
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [date, setDate] = useState(getDefaultDate()); // Default to 4 days from now
   const [time, setTime] = useState('18:00');
@@ -52,6 +63,11 @@ export default function CreateMatchScreen() {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [selectedLevel, setSelectedLevel] = useState('intermediate');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+
+  // Modal states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showCourtPicker, setShowCourtPicker] = useState(false);
 
   // Generate next 14 days
   const getNextDays = () => {
@@ -69,6 +85,8 @@ export default function CreateMatchScreen() {
   };
 
   const handleCreate = async () => {
+    console.log('handleCreate called'); // Debug
+
     if (!user) {
       Alert.alert('Login necessário', 'Faça login para criar uma partida', [
         { text: 'Cancelar' },
@@ -83,12 +101,19 @@ export default function CreateMatchScreen() {
       if (!date) missing.push('Data');
       if (!time) missing.push('Horário');
 
-      console.log('Validation failed:', { selectedSport, date, time, missing }); // Debug
       Alert.alert(
         'Atenção',
         `Preencha os seguintes campos:\n${missing.join(', ')}`
       );
       return;
+    }
+
+    // Warn if no court selected, but allow proceeding if it's not strictly required by DB
+    // (Assuming DB allows null court_id for "TBD" locations)
+    if (!selectedCourt) {
+      // Optional: Ask user if they want to select a court
+      // For now, we'll proceed but log it
+      console.log('No court selected');
     }
 
     try {
@@ -104,12 +129,19 @@ export default function CreateMatchScreen() {
         court_id: selectedCourt || undefined,
       };
 
+      console.log('Creating match with input:', input);
       const match = await createMatch(input, user.id);
+      console.log('Match created:', match);
 
-      // Navigate to invite players screen
-      router.replace(`/match/${match.id}/invite` as any);
+      if (match?.id) {
+        // Navigate to invite players screen
+        router.replace(`/match/${match.id}/invite` as any);
+      } else {
+        throw new Error('ID da partida não retornado');
+      }
     } catch (err: any) {
-      Alert.alert('Erro', err.message || 'Falha ao criar partida');
+      console.error('Create match error:', err);
+      Alert.alert('Erro', err.message || 'Falha ao criar partida. Tente novamente.');
     }
   };
 
@@ -225,21 +257,25 @@ export default function CreateMatchScreen() {
           {/* Onde vai ser? */}
           <Text className="text-base font-bold text-black mb-3">Onde vai ser?</Text>
           <Pressable
-            onPress={() => router.push('/courts/select' as any)}
-            className="bg-green-50 border border-green-200 rounded-2xl p-4 flex-row items-center mb-6"
+            onPress={() => setShowCourtPicker(true)}
+            className={`rounded-2xl p-4 flex-row items-center mb-6 ${selectedCourtData ? 'bg-green-50 border border-green-200' : 'bg-neutral-100'}`}
           >
-            <View className="w-12 h-12 bg-green-100 rounded-xl items-center justify-center">
-              <MaterialIcons name="check-circle" size={24} color="#22C55E" />
+            <View className={`w-12 h-12 rounded-xl items-center justify-center ${selectedCourtData ? 'bg-green-100' : 'bg-neutral-200'}`}>
+              <MaterialIcons
+                name={selectedCourtData ? "check-circle" : "location-on"}
+                size={24}
+                color={selectedCourtData ? "#22C55E" : "#737373"}
+              />
             </View>
             <View className="flex-1 ml-3">
               <Text className="font-semibold text-black">
-                {selectedCourtData?.name || 'Arena BeachIbirapuera'}
+                {selectedCourtData?.name || 'Selecionar quadra'}
               </Text>
               <Text className="text-sm text-neutral-500">
-                {selectedCourtData?.sport || 'BeachTennis'} · Quadra 2
+                {selectedCourtData ? `${selectedCourtData.sport}` : 'Toque para escolher'}
               </Text>
             </View>
-            <MaterialIcons name="edit" size={20} color="#A3A3A3" />
+            <MaterialIcons name="chevron-right" size={24} color="#A3A3A3" />
           </Pressable>
 
           {/* Quando? */}
@@ -247,25 +283,21 @@ export default function CreateMatchScreen() {
           <View className="flex-row gap-3 mb-6">
             {/* Data */}
             <Pressable
-              onPress={() => {
-                // Show date picker
-                const today = new Date();
-                today.setDate(today.getDate() + 4); // Default to 4 days from now (Saturday)
-                setDate(today.toISOString().split('T')[0]);
-              }}
+              onPress={() => setShowDatePicker(true)}
               className="flex-1 bg-neutral-100 rounded-2xl p-4"
             >
               <Text className="text-xs text-neutral-500 mb-1">Data</Text>
               <View className="flex-row items-center gap-2">
                 <MaterialIcons name="event" size={18} color="#525252" />
                 <Text className="font-semibold text-black">
-                  {selectedDate?.shortLabel || 'Sáb, 7 Dez'}
+                  {selectedDate?.shortLabel || 'Selecionar'}
                 </Text>
               </View>
             </Pressable>
 
             {/* Horário */}
             <Pressable
+              onPress={() => setShowTimePicker(true)}
               className="flex-1 bg-neutral-100 rounded-2xl p-4"
             >
               <Text className="text-xs text-neutral-500 mb-1">Horário</Text>
@@ -382,26 +414,34 @@ export default function CreateMatchScreen() {
         <Pressable
           onPress={handleCreate}
           disabled={loading}
-          className="overflow-hidden rounded-2xl"
+          style={{ borderRadius: 16, overflow: 'hidden' }}
         >
           <LinearGradient
-            colors={matchType === 'ranked' ? ['#84CC16', '#65A30D'] : ['#000', '#262626']}
+            colors={['#84CC16', '#65A30D']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="py-3 px-4 flex-row items-center"
+            style={{
+              paddingVertical: 14,
+              paddingHorizontal: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {matchType === 'ranked' ? (
-              <View className="w-10 h-10 bg-white/30 rounded-full items-center justify-center mr-3">
-                <MaterialIcons name="emoji-events" size={22} color="#1A2E05" />
-              </View>
-            ) : (
-              <MaterialIcons name="sports-tennis" size={20} color="#fff" />
-            )}
+            <MaterialIcons
+              name={matchType === 'ranked' ? 'emoji-events' : 'sports-tennis'}
+              size={22}
+              color={matchType === 'ranked' ? '#1A2E05' : '#fff'}
+            />
             <Text
-              className={`font-semibold text-base ${matchType === 'ranked' ? 'text-lime-950' : 'text-white ml-2'
-                }`}
+              style={{
+                fontWeight: '600',
+                fontSize: 16,
+                color: matchType === 'ranked' ? '#1A2E05' : '#fff',
+                marginLeft: 10,
+              }}
             >
-              {loading ? 'Criando...' : matchType === 'ranked' ? 'Criar Partida Ranqueada' : 'Criar Partida'}
+              {loading ? 'Criando...' : matchType === 'ranked' ? 'Criar Partida PRO' : 'Criar Partida'}
             </Text>
           </LinearGradient>
         </Pressable>
@@ -413,6 +453,138 @@ export default function CreateMatchScreen() {
           </Text>
         )}
       </View>
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-5 pb-8">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-bold text-black">Selecionar Data</Text>
+              <Pressable onPress={() => setShowDatePicker(false)}>
+                <MaterialIcons name="close" size={24} color="#737373" />
+              </Pressable>
+            </View>
+            <ScrollView className="max-h-80" showsVerticalScrollIndicator={false}>
+              <View className="flex-row flex-wrap gap-2">
+                {getNextDays().map((day) => {
+                  const isSelected = date === day.date;
+                  return (
+                    <Pressable
+                      key={day.date}
+                      onPress={() => {
+                        setDate(day.date);
+                        setShowDatePicker(false);
+                      }}
+                      className={`w-[31%] py-4 rounded-xl items-center ${isSelected ? 'bg-black' : 'bg-neutral-100'}`}
+                    >
+                      <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-black'}`}>
+                        {day.shortLabel}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-5 pb-8">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-bold text-black">Selecionar Horário</Text>
+              <Pressable onPress={() => setShowTimePicker(false)}>
+                <MaterialIcons name="close" size={24} color="#737373" />
+              </Pressable>
+            </View>
+            <View className="flex-row flex-wrap gap-2">
+              {timeSlots.map((slot) => {
+                const isSelected = time === slot;
+                return (
+                  <Pressable
+                    key={slot}
+                    onPress={() => {
+                      setTime(slot);
+                      setShowTimePicker(false);
+                    }}
+                    className={`w-[23%] py-3 rounded-xl items-center ${isSelected ? 'bg-black' : 'bg-neutral-100'}`}
+                  >
+                    <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-black'}`}>
+                      {slot}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Court Picker Modal */}
+      <Modal
+        visible={showCourtPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCourtPicker(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-5 pb-8 max-h-[70%]">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-bold text-black">Selecionar Quadra</Text>
+              <Pressable onPress={() => setShowCourtPicker(false)}>
+                <MaterialIcons name="close" size={24} color="#737373" />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {courts.length === 0 ? (
+                <View className="py-8 items-center">
+                  <MaterialIcons name="location-off" size={48} color="#A3A3A3" />
+                  <Text className="text-neutral-500 mt-2">Nenhuma quadra disponível</Text>
+                </View>
+              ) : (
+                <View className="gap-3">
+                  {courts.map((court) => {
+                    const isSelected = selectedCourt === court.id;
+                    return (
+                      <Pressable
+                        key={court.id}
+                        onPress={() => {
+                          setSelectedCourt(court.id);
+                          setShowCourtPicker(false);
+                        }}
+                        className={`p-4 rounded-2xl flex-row items-center ${isSelected ? 'bg-lime-100 border-2 border-lime-500' : 'bg-neutral-50 border border-neutral-200'}`}
+                      >
+                        <View className={`w-12 h-12 rounded-xl items-center justify-center ${isSelected ? 'bg-lime-500' : 'bg-neutral-200'}`}>
+                          <MaterialIcons name="sports-tennis" size={24} color={isSelected ? '#1A2E05' : '#737373'} />
+                        </View>
+                        <View className="flex-1 ml-3">
+                          <Text className="font-semibold text-black">{court.name}</Text>
+                          <Text className="text-sm text-neutral-500">{court.sport} · {court.address}</Text>
+                        </View>
+                        {isSelected && (
+                          <MaterialIcons name="check-circle" size={24} color="#84CC16" />
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -15,6 +15,7 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const { signIn, isLoading } = useAuthStore();
-  const { signInWithGoogle, isGoogleReady } = useGoogleAuth();
+  const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithApple, isAppleAvailable } = useAppleAuth();
 
   const handleLogin = async () => {
     const { error } = await signIn(email, password);
@@ -32,7 +34,15 @@ export default function LoginScreen() {
       return;
     }
 
-    router.replace('/(tabs)');
+    // Buscar perfil atualizado e verificar onboarding
+    await useAuthStore.getState().refreshProfile();
+    const { profile } = useAuthStore.getState();
+
+    if (profile?.onboarding_completed) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/(onboarding)/welcome');
+    }
   };
 
   return (
@@ -120,12 +130,24 @@ export default function LoginScreen() {
             <View className="flex-1 h-px bg-gray-200" />
           </View>
 
-          {/* Google Button - Temporariamente desabilitado */}
-          {/* Configure EXPO_PUBLIC_GOOGLE_CLIENT_ID_* no .env para habilitar */}
-          {false && (
+          {/* Social Login Buttons */}
+          <View className="gap-3">
+            {/* Apple Sign In - Only on iOS */}
+            {isAppleAvailable && (
+              <Pressable
+                onPress={signInWithApple}
+                className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
+              >
+                <Text className="text-white text-lg">󰀵</Text>
+                <Text className="text-white font-semibold">
+                  Continuar com Apple
+                </Text>
+              </Pressable>
+            )}
+
+            {/* Google Sign In */}
             <Pressable
               onPress={signInWithGoogle}
-              disabled={!isGoogleReady}
               className="w-full py-4 bg-white border-2 border-neutral-200 rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-50"
             >
               <Image
@@ -136,7 +158,7 @@ export default function LoginScreen() {
                 Continuar com Google
               </Text>
             </Pressable>
-          )}
+          </View>
 
           <View className="flex-row justify-center mt-6">
             <Text className="text-gray-500">Não tem uma conta? </Text>

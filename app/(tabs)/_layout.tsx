@@ -1,6 +1,7 @@
-import { Tabs } from 'expo-router';
-import { View, Pressable, GestureResponderEvent } from 'react-native';
+import { Tabs, router } from 'expo-router';
+import { View, Pressable, GestureResponderEvent, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuthStore } from '@/stores/authStore';
 
 interface CenterButtonProps {
   onPress?: (
@@ -40,8 +41,14 @@ function CenterButton({ onPress }: CenterButtonProps) {
 }
 
 export default function TabsLayout() {
+  const { profile } = useAuthStore();
+
+  // Verificar se o usuário tem quadras cadastradas (é host)
+  const isHost = profile?.is_host || false;
+
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#000',
@@ -109,5 +116,35 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+
+      {/* Mode Switcher - Modo Host */}
+      {isHost && (
+        <Pressable
+          onPress={() => router.push('/host')}
+          style={{
+            position: 'absolute',
+            bottom: 100,
+            left: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#222',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 999,
+            gap: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+        >
+          <MaterialIcons name="home-work" size={18} color="#FFF" />
+          <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 14 }}>
+            Modo Host
+          </Text>
+        </Pressable>
+      )}
+    </View>
   );
 }

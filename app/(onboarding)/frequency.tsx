@@ -93,13 +93,13 @@ export default function FrequencyScreen() {
               >
                 <View
                   className={`w-12 h-12 rounded-xl items-center justify-center ${
-                    isSelected ? 'bg-lime-500' : 'bg-neutral-100'
+                    isSelected ? 'bg-white' : 'bg-neutral-100'
                   }`}
                 >
                   <MaterialIcons
                     name={option.icon as any}
                     size={24}
-                    color={isSelected ? '#1A2E05' : '#525252'}
+                    color="#000"
                   />
                 </View>
                 <View className="flex-1 ml-4">
@@ -121,12 +121,12 @@ export default function FrequencyScreen() {
                 <View
                   className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
                     isSelected
-                      ? 'bg-lime-500 border-lime-500'
+                      ? 'bg-white border-white'
                       : 'border-neutral-300'
                   }`}
                 >
                   {isSelected && (
-                    <MaterialIcons name="check" size={16} color="#1A2E05" />
+                    <MaterialIcons name="check" size={16} color="#000" />
                   )}
                 </View>
               </Pressable>

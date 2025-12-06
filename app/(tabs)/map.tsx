@@ -24,14 +24,16 @@ const BOTTOM_SHEET_MAX = height * 0.6;
 const BOTTOM_SHEET_MID = height * 0.35;
 const BOTTOM_SHEET_MIN = 100;
 
-// Sport filters with colors
+// Sport filters - ordenado por popularidade no Brasil
 const SPORT_FILTERS = [
-  { id: 'all', label: 'Todos', icon: 'apps', color: '#000' },
-  { id: 'Beach Tennis', label: 'Beach Tennis', icon: 'sports-tennis', color: '#F59E0B' },
-  { id: 'Padel', label: 'Padel', icon: 'sports-tennis', color: '#3B82F6' },
-  { id: 'Tênis', label: 'Tênis', icon: 'sports-tennis', color: '#22C55E' },
-  { id: 'Futevôlei', label: 'Futevôlei', icon: 'sports-volleyball', color: '#EF4444' },
-  { id: 'Vôlei', label: 'Vôlei', icon: 'sports-volleyball', color: '#8B5CF6' },
+  { id: 'all', label: 'Todos', icon: 'apps' },
+  { id: 'Futebol', label: 'Futebol', icon: 'sports-soccer' },
+  { id: 'Vôlei', label: 'Vôlei', icon: 'sports-volleyball' },
+  { id: 'Beach Tennis', label: 'Beach', icon: 'sports-tennis' },
+  { id: 'Futevôlei', label: 'Futevôlei', icon: 'sports-volleyball' },
+  { id: 'Tênis', label: 'Tênis', icon: 'sports-tennis' },
+  { id: 'Padel', label: 'Padel', icon: 'sports-tennis' },
+  { id: 'Basquete', label: 'Basquete', icon: 'sports-basketball' },
 ];
 
 // Price filters
@@ -41,7 +43,7 @@ const PRICE_FILTERS = [
   { id: 'paid', label: 'Pago' },
 ];
 
-// Custom marker component
+// Custom marker component - minimalist
 const CourtMarker = ({
   court,
   isSelected,
@@ -51,11 +53,6 @@ const CourtMarker = ({
   isSelected: boolean;
   onPress: () => void;
 }) => {
-  const getSportColor = (sport: string) => {
-    const filter = SPORT_FILTERS.find(f => f.id === sport);
-    return filter?.color || '#000';
-  };
-
   return (
     <Marker
       coordinate={{
@@ -66,40 +63,27 @@ const CourtMarker = ({
       tracksViewChanges={false}
     >
       <View className="items-center">
-        {/* Pin */}
+        {/* Pin - minimalist black/white */}
         <View
-          className={`px-3 py-1.5 rounded-full shadow-lg ${
-            isSelected ? 'scale-110' : ''
-          }`}
+          className="px-3 py-2 rounded-full shadow-lg"
           style={{
             backgroundColor: isSelected ? '#000' : '#fff',
-            borderWidth: isSelected ? 0 : 2,
-            borderColor: getSportColor(court.sport),
+            borderWidth: 1,
+            borderColor: isSelected ? '#000' : '#E5E5E5',
+            transform: [{ scale: isSelected ? 1.1 : 1 }],
           }}
         >
           <Text
-            className={`text-xs font-bold ${
-              isSelected ? 'text-white' : 'text-black'
-            }`}
+            className="text-xs font-bold"
+            style={{ color: isSelected ? '#fff' : '#000' }}
           >
             {court.is_free ? 'Grátis' : `R$${court.price_per_hour}`}
           </Text>
         </View>
-        {/* Triangle pointer */}
+        {/* Small dot pointer */}
         <View
-          style={{
-            width: 0,
-            height: 0,
-            backgroundColor: 'transparent',
-            borderStyle: 'solid',
-            borderLeftWidth: 6,
-            borderRightWidth: 6,
-            borderTopWidth: 8,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
-            borderTopColor: isSelected ? '#000' : '#fff',
-            marginTop: -1,
-          }}
+          className="w-2 h-2 rounded-full -mt-1"
+          style={{ backgroundColor: isSelected ? '#000' : '#fff', borderWidth: 1, borderColor: '#E5E5E5' }}
         />
       </View>
     </Marker>
@@ -158,11 +142,11 @@ const CourtCard = ({
             </Text>
           </View>
           <View className="flex-row items-center gap-3 mt-1">
-            <Text className="text-sm font-bold text-green-600">
+            <Text className="text-sm font-bold text-black">
               {court.is_free ? 'Grátis' : `R$${court.price_per_hour}/h`}
             </Text>
             <View className="flex-row items-center gap-0.5">
-              <MaterialIcons name="star" size={12} color="#F59E0B" />
+              <MaterialIcons name="star" size={12} color="#000" />
               <Text className="text-xs text-neutral-600">
                 {court.rating?.toFixed(1) || '—'}
               </Text>
@@ -193,15 +177,15 @@ const CourtCard = ({
 
         {/* Badges */}
         <View className="absolute top-3 left-3 right-3 flex-row justify-between">
-          <View className="px-2 py-1 bg-black/70 rounded-full">
-            <Text className="text-white text-xs font-medium">
+          <View className="px-2.5 py-1 bg-white rounded-full">
+            <Text className="text-black text-xs font-medium">
               {court.sport}
             </Text>
           </View>
           {court.verified && (
-            <View className="px-2 py-1 bg-green-500 rounded-full flex-row items-center gap-1">
-              <MaterialIcons name="verified" size={12} color="#fff" />
-              <Text className="text-white text-xs font-medium">Verificada</Text>
+            <View className="px-2.5 py-1 bg-white rounded-full flex-row items-center gap-1">
+              <MaterialIcons name="verified" size={12} color="#000" />
+              <Text className="text-black text-xs font-medium">Verificada</Text>
             </View>
           )}
         </View>
@@ -229,7 +213,7 @@ const CourtCard = ({
           </View>
 
           <View className="items-end ml-3">
-            <Text className="text-lg font-bold text-green-600">
+            <Text className="text-lg font-bold text-black">
               {court.is_free ? 'Grátis' : `R$${court.price_per_hour}`}
             </Text>
             <Text className="text-xs text-neutral-400">/hora</Text>
@@ -239,8 +223,8 @@ const CourtCard = ({
         {/* Features */}
         <View className="flex-row items-center gap-4 mt-3">
           <View className="flex-row items-center gap-1">
-            <MaterialIcons name="star" size={16} color="#F59E0B" />
-            <Text className="text-sm font-medium text-neutral-700">
+            <MaterialIcons name="star" size={16} color="#000" />
+            <Text className="text-sm font-medium text-black">
               {court.rating?.toFixed(1) || '0.0'}
             </Text>
             <Text className="text-xs text-neutral-400">
@@ -525,7 +509,7 @@ export default function MapScreen() {
             </Pressable>
           </View>
 
-          {/* Sport Filters */}
+          {/* Sport Filters - Minimalist with icons */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -536,7 +520,7 @@ export default function MapScreen() {
                 <Pressable
                   key={filter.id}
                   onPress={() => setSelectedSport(filter.id)}
-                  className={`flex-row items-center gap-2 px-4 py-2.5 rounded-xl ${
+                  className={`flex-row items-center gap-1.5 px-4 py-2.5 rounded-full ${
                     selectedSport === filter.id
                       ? 'bg-black'
                       : 'bg-white border border-neutral-200'
@@ -545,7 +529,7 @@ export default function MapScreen() {
                   <MaterialIcons
                     name={filter.icon as any}
                     size={16}
-                    color={selectedSport === filter.id ? '#fff' : filter.color}
+                    color={selectedSport === filter.id ? '#fff' : '#525252'}
                   />
                   <Text
                     className={`text-sm font-medium ${
@@ -566,9 +550,9 @@ export default function MapScreen() {
                 <Pressable
                   key={filter.id}
                   onPress={() => setSelectedPrice(filter.id)}
-                  className={`px-4 py-2 rounded-xl ${
+                  className={`px-4 py-2 rounded-full ${
                     selectedPrice === filter.id
-                      ? 'bg-green-500'
+                      ? 'bg-black'
                       : 'bg-white border border-neutral-200'
                   }`}
                 >
@@ -611,17 +595,17 @@ export default function MapScreen() {
           {/* My Location */}
           <Pressable
             onPress={handleMyLocation}
-            className="w-12 h-12 bg-white rounded-2xl items-center justify-center shadow-lg"
+            className="w-11 h-11 bg-white rounded-full items-center justify-center shadow-md border border-neutral-100"
           >
-            <MaterialIcons name="my-location" size={24} color="#000" />
+            <MaterialIcons name="my-location" size={20} color="#000" />
           </Pressable>
 
           {/* Add Court */}
           <Pressable
             onPress={() => router.push('/court/add' as any)}
-            className="w-12 h-12 bg-lime-500 rounded-2xl items-center justify-center shadow-lg"
+            className="w-11 h-11 bg-black rounded-full items-center justify-center shadow-md"
           >
-            <MaterialIcons name="add-location-alt" size={24} color="#1A2E05" />
+            <MaterialIcons name="add" size={22} color="#fff" />
           </Pressable>
         </View>
       )}

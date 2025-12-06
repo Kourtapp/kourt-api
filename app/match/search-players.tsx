@@ -119,9 +119,15 @@ export default function SearchPlayersScreen() {
   });
 
   const handleFollow = (playerId: string) => {
+    // First show as followed
     setPlayers(prev => prev.map(p =>
-      p.id === playerId ? { ...p, following: !p.following } : p
+      p.id === playerId ? { ...p, following: true } : p
     ));
+
+    // Then remove from list after a short delay
+    setTimeout(() => {
+      setPlayers(prev => prev.filter(p => p.id !== playerId));
+    }, 500);
   };
 
   const getLevelColor = (level: string) => {
@@ -183,11 +189,10 @@ export default function SearchPlayersScreen() {
       >
         {/* Sport Filter */}
         <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-            searchQuery.toLowerCase().includes('beach')
+          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${searchQuery.toLowerCase().includes('beach')
               ? 'bg-[#22C55E]'
               : 'bg-gray-100'
-          }`}
+            }`}
         >
           <MaterialIcons
             name="sports-tennis"
@@ -195,11 +200,10 @@ export default function SearchPlayersScreen() {
             color={searchQuery.toLowerCase().includes('beach') ? '#fff' : '#6B7280'}
           />
           <Text
-            className={`ml-1.5 text-sm font-medium ${
-              searchQuery.toLowerCase().includes('beach')
+            className={`ml-1.5 text-sm font-medium ${searchQuery.toLowerCase().includes('beach')
                 ? 'text-white'
                 : 'text-gray-700'
-            }`}
+              }`}
           >
             BeachTennis
           </Text>
@@ -207,17 +211,15 @@ export default function SearchPlayersScreen() {
 
         {/* Level Filter */}
         <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-            levelFilter === 'intermediario' ? 'bg-orange-500' : 'bg-gray-100'
-          }`}
+          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${levelFilter === 'intermediario' ? 'bg-orange-500' : 'bg-gray-100'
+            }`}
           onPress={() => setLevelFilter(
             levelFilter === 'intermediario' ? 'all' : 'intermediario'
           )}
         >
           <Text
-            className={`text-sm font-medium ${
-              levelFilter === 'intermediario' ? 'text-white' : 'text-gray-700'
-            }`}
+            className={`text-sm font-medium ${levelFilter === 'intermediario' ? 'text-white' : 'text-gray-700'
+              }`}
           >
             Intermediário
           </Text>
@@ -225,9 +227,8 @@ export default function SearchPlayersScreen() {
 
         {/* Location Filter */}
         <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-            locationFilter === 'nearby' ? 'bg-blue-500' : 'bg-gray-100'
-          }`}
+          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${locationFilter === 'nearby' ? 'bg-blue-500' : 'bg-gray-100'
+            }`}
           onPress={() => setLocationFilter(
             locationFilter === 'nearby' ? 'all' : 'nearby'
           )}
@@ -238,9 +239,8 @@ export default function SearchPlayersScreen() {
             color={locationFilter === 'nearby' ? '#fff' : '#6B7280'}
           />
           <Text
-            className={`ml-1.5 text-sm font-medium ${
-              locationFilter === 'nearby' ? 'text-white' : 'text-gray-700'
-            }`}
+            className={`ml-1.5 text-sm font-medium ${locationFilter === 'nearby' ? 'text-white' : 'text-gray-700'
+              }`}
           >
             Perto de mim
           </Text>
@@ -278,16 +278,14 @@ export default function SearchPlayersScreen() {
 
                   <TouchableOpacity
                     onPress={() => handleFollow(player.id)}
-                    className={`px-4 py-1.5 rounded-full ${
-                      player.following
+                    className={`px-4 py-1.5 rounded-full ${player.following
                         ? 'bg-gray-200'
                         : 'bg-[#22C55E]'
-                    }`}
+                      }`}
                   >
                     <Text
-                      className={`text-sm font-medium ${
-                        player.following ? 'text-gray-700' : 'text-white'
-                      }`}
+                      className={`text-sm font-medium ${player.following ? 'text-gray-700' : 'text-white'
+                        }`}
                     >
                       {player.following ? 'Seguindo' : 'Seguir'}
                     </Text>

@@ -86,13 +86,13 @@ export default function GoalsScreen() {
               >
                 <View
                   className={`w-12 h-12 rounded-xl items-center justify-center ${
-                    isSelected ? 'bg-lime-500' : 'bg-neutral-100'
+                    isSelected ? 'bg-white' : 'bg-neutral-100'
                   }`}
                 >
                   <MaterialIcons
                     name={option.icon as any}
                     size={24}
-                    color={isSelected ? '#1A2E05' : '#525252'}
+                    color="#000"
                   />
                 </View>
                 <Text
@@ -105,12 +105,12 @@ export default function GoalsScreen() {
                 <View
                   className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
                     isSelected
-                      ? 'bg-lime-500 border-lime-500'
+                      ? 'bg-white border-white'
                       : 'border-neutral-300'
                   }`}
                 >
                   {isSelected && (
-                    <MaterialIcons name="check" size={16} color="#1A2E05" />
+                    <MaterialIcons name="check" size={16} color="#000" />
                   )}
                 </View>
               </Pressable>
@@ -125,22 +125,14 @@ export default function GoalsScreen() {
           onPress={handleFinish}
           disabled={loading || selected.length === 0}
           className={`w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
-            selected.length > 0 && !loading ? 'bg-lime-500' : 'bg-neutral-300'
+            selected.length > 0 && !loading ? 'bg-black' : 'bg-neutral-300'
           }`}
         >
-          <Text
-            className={`font-semibold text-[15px] ${
-              selected.length > 0 ? 'text-lime-950' : 'text-white'
-            }`}
-          >
+          <Text className="font-semibold text-[15px] text-white">
             {loading ? 'Salvando...' : 'Finalizar'}
           </Text>
           {!loading && (
-            <MaterialIcons
-              name="check"
-              size={20}
-              color={selected.length > 0 ? '#1A2E05' : '#FFF'}
-            />
+            <MaterialIcons name="check" size={20} color="#FFF" />
           )}
         </Pressable>
       </View>

@@ -11,42 +11,36 @@ const scheduleOptions = [
     label: 'Manhã (dias úteis)',
     desc: '6h - 12h',
     icon: 'wb-sunny',
-    iconColor: '#F59E0B',
   },
   {
     id: 'afternoon_weekday',
     label: 'Tarde (dias úteis)',
     desc: '12h - 18h',
     icon: 'brightness-5',
-    iconColor: '#F97316',
   },
   {
     id: 'evening_weekday',
     label: 'Noite (dias úteis)',
     desc: '18h - 22h',
     icon: 'nights-stay',
-    iconColor: '#6366F1',
   },
   {
     id: 'morning_weekend',
     label: 'Manhã (fim de semana)',
     desc: 'Sábado e domingo, 6h - 12h',
     icon: 'wb-sunny',
-    iconColor: '#10B981',
   },
   {
     id: 'afternoon_weekend',
     label: 'Tarde (fim de semana)',
     desc: 'Sábado e domingo, 12h - 18h',
     icon: 'brightness-5',
-    iconColor: '#22C55E',
   },
   {
     id: 'evening_weekend',
     label: 'Noite (fim de semana)',
     desc: 'Sábado e domingo, 18h - 22h',
     icon: 'nights-stay',
-    iconColor: '#8B5CF6',
   },
 ];
 
@@ -119,13 +113,13 @@ export default function ScheduleScreen() {
               >
                 <View
                   className={`w-10 h-10 rounded-xl items-center justify-center ${
-                    isSelected ? 'bg-lime-500' : 'bg-neutral-100'
+                    isSelected ? 'bg-white' : 'bg-neutral-100'
                   }`}
                 >
                   <MaterialIcons
                     name={option.icon as any}
                     size={20}
-                    color={isSelected ? '#1A2E05' : option.iconColor}
+                    color="#000"
                   />
                 </View>
                 <View className="flex-1 ml-3">
@@ -147,12 +141,12 @@ export default function ScheduleScreen() {
                 <View
                   className={`w-5 h-5 rounded-md border-2 items-center justify-center ${
                     isSelected
-                      ? 'bg-lime-500 border-lime-500'
+                      ? 'bg-white border-white'
                       : 'border-neutral-300'
                   }`}
                 >
                   {isSelected && (
-                    <MaterialIcons name="check" size={14} color="#1A2E05" />
+                    <MaterialIcons name="check" size={14} color="#000" />
                   )}
                 </View>
               </Pressable>

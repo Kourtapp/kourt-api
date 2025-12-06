@@ -1,8 +1,14 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, Image } from 'react-native';
 import { Link } from 'expo-router';
 import { Button } from '@/components/ui';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
+  const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithApple, isAppleAvailable } = useAppleAuth();
+
   return (
     <View className="flex-1 bg-background px-6 justify-center items-center">
       <View className="items-center mb-12">
@@ -13,8 +19,42 @@ export default function WelcomeScreen() {
       </View>
 
       <View className="w-full gap-3">
+        {/* Apple Sign In - Only on iOS */}
+        {isAppleAvailable && (
+          <Pressable
+            onPress={signInWithApple}
+            className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
+          >
+            <MaterialIcons name="apple" size={22} color="#fff" />
+            <Text className="text-white font-semibold text-base">
+              Continuar com Apple
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Google Sign In */}
+        <Pressable
+          onPress={signInWithGoogle}
+          className="w-full py-4 bg-white border-2 border-neutral-200 rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-50"
+        >
+          <Image
+            source={{ uri: 'https://www.google.com/favicon.ico' }}
+            className="w-5 h-5"
+          />
+          <Text className="text-black font-semibold text-base">
+            Continuar com Google
+          </Text>
+        </Pressable>
+
+        {/* Divider */}
+        <View className="flex-row items-center my-2">
+          <View className="flex-1 h-px bg-gray-200" />
+          <Text className="mx-4 text-gray-400 text-sm">ou</Text>
+          <View className="flex-1 h-px bg-gray-200" />
+        </View>
+
         <Link href="/(auth)/login" asChild>
-          <Button title="Entrar" variant="primary" size="lg" />
+          <Button title="Entrar com e-mail" variant="primary" size="lg" />
         </Link>
 
         <Link href="/(auth)/register" asChild>

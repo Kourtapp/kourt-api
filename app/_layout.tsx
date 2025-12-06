@@ -9,7 +9,8 @@ import '../global.css';
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isInitialized } = useAuthStore();
   const segments = useSegments();
-  const hasNavigated = useRef(false);
+  const previousUserId = useRef<string | undefined>(undefined);
+  const hasInitialNavigated = useRef(false);
 
   // Use refs to track values without causing re-renders
   const onboardingCompleted = profile?.onboarding_completed;
@@ -24,30 +25,42 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inOnboardingGroup = firstSegment === '(onboarding)';
     const inChatGroup = firstSegment === 'chat';
 
-    // Prevent multiple navigations
-    if (hasNavigated.current) return;
+    // Check if user just logged out (had user before, doesn't have now)
+    const justLoggedOut = previousUserId.current && !userId;
 
-    if (!userId && (inTabsGroup || inOnboardingGroup || inChatGroup)) {
+    // Check if user just logged in (didn't have user before, has now)
+    const justLoggedIn = !previousUserId.current && userId;
+
+    // Update previous user ID
+    previousUserId.current = userId;
+
+    // If user is already in onboarding, don't redirect unless they just logged out
+    if (inOnboardingGroup && userId && !justLoggedOut) {
+      return; // Let them continue onboarding without interruption
+    }
+
+    // If user is already in tabs and onboarding is complete, don't redirect
+    if (inTabsGroup && userId && onboardingCompleted) {
+      return;
+    }
+
+    if (!userId && (inTabsGroup || inOnboardingGroup || inChatGroup || justLoggedOut)) {
       // Not authenticated, redirect to welcome
-      hasNavigated.current = true;
+      console.log('[Auth] Redirecting to welcome - user not authenticated');
       router.replace('/');
-    } else if (userId && (inAuthGroup || !firstSegment || firstSegment === 'index')) {
-      // Authenticated, check if onboarding is completed
-      hasNavigated.current = true;
+    } else if (userId && (inAuthGroup || !firstSegment || firstSegment === 'index' || justLoggedIn)) {
+      // Authenticated and in auth/welcome screens, or just logged in
       if (onboardingCompleted) {
         // Onboarding completed, go to tabs
+        console.log('[Auth] Redirecting to tabs - onboarding completed');
         router.replace('/(tabs)');
-      } else {
-        // Onboarding not completed, go to onboarding
+      } else if (!inOnboardingGroup) {
+        // Onboarding not completed and not already in onboarding
+        console.log('[Auth] Redirecting to onboarding - onboarding not completed');
         router.replace('/(onboarding)/welcome');
       }
     }
   }, [userId, onboardingCompleted, isInitialized, segments]);
-
-  // Reset navigation flag when user changes
-  useEffect(() => {
-    hasNavigated.current = false;
-  }, [userId]);
 
   if (!isInitialized) {
     return (

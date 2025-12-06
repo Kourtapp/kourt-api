@@ -49,7 +49,7 @@ export default function MatchDetailScreen() {
     );
   }
 
-  const spotsLeft = match.max_players - match.current_players;
+  const spotsLeft = (match.max_players || 4) - (match.current_players || 0);
   const players = (match as any).players || [];
   const organizer = (match as any).organizer;
   const court = (match as any).court;
@@ -215,7 +215,7 @@ export default function MatchDetailScreen() {
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-base font-bold text-black">
-                Jogadores ({match.current_players}/{match.max_players})
+                Jogadores ({match.current_players || 0}/{match.max_players || 4})
               </Text>
               {spotsLeft > 0 && (
                 <View className="px-2 py-1 bg-lime-100 rounded-full">
@@ -317,7 +317,7 @@ export default function MatchDetailScreen() {
                     Máx. jogadores
                   </Text>
                   <Text className="font-medium text-black">
-                    {match.max_players}
+                    {match.max_players || 4}
                   </Text>
                 </View>
               </View>

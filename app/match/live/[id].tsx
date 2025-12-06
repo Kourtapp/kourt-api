@@ -341,9 +341,8 @@ export default function LiveMatchScreen() {
             }}
             anchor={{ x: 0.5, y: 0.5 }}
           >
-            <View className={`w-5 h-5 rounded-full ${
-              player.team === 'a' ? 'bg-blue-500' : 'bg-blue-500'
-            } border-2 border-white shadow-lg`} />
+            <View className={`w-5 h-5 rounded-full ${player.team === 'a' ? 'bg-blue-500' : 'bg-blue-500'
+              } border-2 border-white shadow-lg`} />
           </Marker>
         ))}
       </MapView>
@@ -367,7 +366,7 @@ export default function LiveMatchScreen() {
           )}
 
           <Pressable
-            onPress={() => {/* Share */}}
+            onPress={() => {/* Share */ }}
             className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
           >
             <MaterialIcons name="share" size={22} color="#000" />
@@ -379,9 +378,8 @@ export default function LiveMatchScreen() {
       <View className="absolute right-4 top-1/3 gap-3">
         <Pressable
           onPress={toggle3D}
-          className={`w-12 h-12 rounded-xl items-center justify-center shadow-lg ${
-            is3D ? 'bg-black' : 'bg-white'
-          }`}
+          className={`w-12 h-12 rounded-xl items-center justify-center shadow-lg ${is3D ? 'bg-black' : 'bg-white'
+            }`}
         >
           <Text className={`text-base font-bold ${is3D ? 'text-white' : 'text-black'}`}>3D</Text>
         </Pressable>
@@ -447,7 +445,7 @@ export default function LiveMatchScreen() {
         <View className="flex-row items-center justify-center gap-6 px-5 pb-6">
           {/* Sport Icon / Confirm */}
           <Pressable
-            onPress={() => {/* Sport settings */}}
+            onPress={() => {/* Sport settings */ }}
             className="w-16 h-16 bg-neutral-100 rounded-full items-center justify-center relative"
           >
             <MaterialIcons name="sports-tennis" size={28} color="#525252" />
@@ -497,6 +495,14 @@ export default function LiveMatchScreen() {
             className="w-16 h-16 bg-neutral-100 rounded-full items-center justify-center"
           >
             <MaterialIcons name="person-add" size={28} color="#525252" />
+          </Pressable>
+
+          {/* Record Button */}
+          <Pressable
+            onPress={() => router.push(`/match/record/${id}` as any)}
+            className="w-16 h-16 bg-red-50 rounded-full items-center justify-center border border-red-100"
+          >
+            <MaterialIcons name="videocam" size={28} color="#EF4444" />
           </Pressable>
         </View>
 

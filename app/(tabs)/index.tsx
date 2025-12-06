@@ -21,6 +21,8 @@ import * as Location from 'expo-location';
 import { InvitesSection } from '@/components/home/InvitesSection';
 import { CityAutocomplete } from '@/components/inputs/CityAutocomplete';
 import { CheckInModal } from '@/components/modals/CheckInModal';
+import { CourtCard } from '@/components/cards/CourtCard';
+import { notificationService } from '@/services/notificationService';
 
 // Cities list for location picker
 const CITIES = [
@@ -36,8 +38,8 @@ const CITIES = [
   { id: '10', name: 'Recife', state: 'PE' },
 ];
 
-// Mock games happening now
-const JOGOS_ACONTECENDO = [
+// Initial games happening now
+const INITIAL_JOGOS = [
   {
     id: '1',
     sport: 'BeachTennis',
@@ -112,14 +114,22 @@ const NOVOS_ESPORTES = [
 
 // Mock best courts in region
 const MELHORES_REGIAO = [
-  { id: '1', name: 'Arena BeachPremium', neighborhood: 'Moema', distance: '4.5 km', rating: 4.9, reviews: 247, price: 180, badge: '#1 Beach' },
-  { id: '2', name: 'Padel Club Jardins', neighborhood: 'Jardins', distance: '3.2 km', rating: 4.8, reviews: 189, price: 150 },
+  { id: '1', name: 'Arena BeachPremium', neighborhood: 'Moema', distance: '4.5 km', rating: 4.9, reviews: 247, price: 180, type: 'privada' },
+  { id: '2', name: 'Padel Club Jardins', neighborhood: 'Jardins', distance: '3.2 km', rating: 4.8, reviews: 189, price: 150, type: 'particular' },
+  { id: '3', name: 'Quadra do Ibirapuera', neighborhood: 'Ibirapuera', distance: '2.1 km', rating: 4.7, reviews: 312, price: 0, type: 'publica' },
+  { id: '4', name: 'Tennis Club SP', neighborhood: 'Pinheiros', distance: '5.8 km', rating: 4.9, reviews: 156, price: 200, type: 'privada' },
+  { id: '5', name: 'Praça da República', neighborhood: 'Centro', distance: '1.5 km', rating: 4.3, reviews: 89, price: 0, type: 'publica' },
+  { id: '6', name: 'Beach House Arena', neighborhood: 'Vila Olímpia', distance: '6.2 km', rating: 4.6, reviews: 203, price: 160, type: 'particular' },
 ];
 
 // Mock personalized recommendations
 const VOCE_PODE_GOSTAR = [
-  { id: '1', name: 'Quadra do Carlos', sport: 'BeachTennis', rating: 5.0, match: 92, type: 'Particular', price: 80, reason: 'Mesmo nível' },
-  { id: '2', name: 'BeachArena', sport: 'BeachTennis', rating: 4.7, match: 87, type: 'Privada', reason: '3 amigos jogaram' },
+  { id: '1', name: 'Quadra do Carlos', sport: 'Beach Tennis', rating: 5.0, type: 'particular', price: 80, reason: 'Mesmo nível' },
+  { id: '2', name: 'BeachArena', sport: 'Beach Tennis', rating: 4.7, type: 'privada', price: 120, reason: '3 amigos jogaram' },
+  { id: '3', name: 'Parque Villa-Lobos', sport: 'Vôlei', rating: 4.5, type: 'publica', price: 0, reason: 'Perto de você' },
+  { id: '4', name: 'Sunset Padel', sport: 'Padel', rating: 4.8, type: 'privada', price: 140, reason: 'Top avaliada' },
+  { id: '5', name: 'Quadra Municipal', sport: 'Futebol', rating: 4.2, type: 'publica', price: 0, reason: 'Gratuita' },
+  { id: '6', name: 'Casa do Ténis', sport: 'Tênis', rating: 4.9, type: 'particular', price: 90, reason: 'Seu esporte favorito' },
 ];
 
 export default function HomeScreen() {
@@ -135,7 +145,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     checkTutorialStatus();
-  }, []);
+  }, [checkTutorialStatus]);
 
   useEffect(() => {
     if (!hasSeenTutorial && !isActive) {
@@ -144,7 +154,7 @@ export default function HomeScreen() {
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [hasSeenTutorial, isActive]);
+  }, [hasSeenTutorial, isActive, startTutorial]);
 
   const { courts, loading: courtsLoading } = useCourts(
     selectedSport ? { sport: selectedSport } : undefined,
@@ -201,8 +211,11 @@ export default function HomeScreen() {
     { id: '4', name: 'Maria L.', sport: 'BeachTennis', status: 'Nível similar', online: true },
   ], []);
 
+  // Games happening now - state so we can remove after joining
+  const [jogosAcontecendo, setJogosAcontecendo] = useState(INITIAL_JOGOS);
+
   // Mock invites formatted for InvitesSection
-  const invitesForSection = useMemo(() => [
+  const [invites, setInvites] = useState([
     {
       id: '1',
       senderName: 'Pedro Ferreira',
@@ -231,7 +244,7 @@ export default function HomeScreen() {
       likesCount: 12,
       commentsCount: 3,
     },
-  ], []);
+  ]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#fafafa]" edges={['top']}>
@@ -280,8 +293,8 @@ export default function HomeScreen() {
 
         {/* Search Bar */}
         <Pressable
-          onPress={() => router.push('/search' as any)}
-          className="mx-5 mb-4"
+          onPress={() => router.push('/(tabs)/map')}
+          className="mx-5 mb-6"
         >
           <View className="flex-row items-center bg-white rounded-2xl border border-neutral-200 px-4 py-3">
             <MaterialIcons name="search" size={22} color="#A3A3A3" />
@@ -294,155 +307,73 @@ export default function HomeScreen() {
           </View>
         </Pressable>
 
-        {/* Map Preview */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/map' as any)}
-          className="mx-5 mb-4 rounded-2xl overflow-hidden bg-neutral-100 h-36"
-        >
-          <View className="flex-1 bg-lime-50 items-center justify-center relative">
-            {/* Simplified map visual */}
-            <View className="absolute inset-0 opacity-30">
-              <View className="absolute top-4 left-6 w-2 h-2 bg-lime-500 rounded-full" />
-              <View className="absolute top-8 right-12 w-2 h-2 bg-lime-500 rounded-full" />
-              <View className="absolute top-16 left-20 w-2 h-2 bg-lime-500 rounded-full" />
-              <View className="absolute bottom-12 right-8 w-2 h-2 bg-lime-500 rounded-full" />
-              <View className="absolute bottom-8 left-10 w-2 h-2 bg-lime-500 rounded-full" />
-            </View>
-            <MaterialIcons name="map" size={32} color="#84CC16" />
-            <Text className="text-lime-700 font-medium mt-1">Ver quadras perto de você</Text>
-          </View>
-          {/* Map badge */}
-          <View className="absolute top-3 left-3 flex-row items-center bg-white px-3 py-1.5 rounded-full shadow-sm">
-            <MaterialIcons name="place" size={14} color="#84CC16" />
-            <Text className="text-xs font-medium text-neutral-700 ml-1">{courts.length || 12} quadras perto</Text>
-          </View>
-          {/* Open map button */}
-          <View className="absolute bottom-3 right-3 bg-black px-3 py-1.5 rounded-full flex-row items-center">
-            <Text className="text-xs font-medium text-white mr-1">Abrir mapa</Text>
-            <MaterialIcons name="chevron-right" size={14} color="#fff" />
-          </View>
-        </Pressable>
 
-        {/* Your Ranking Bar */}
-        <Pressable
-          onPress={() => router.push('/rankings' as any)}
-          className="mx-5 mb-4 bg-neutral-900 rounded-2xl p-3 flex-row items-center"
-        >
-          <Text className="text-xl font-black text-white mr-3">7</Text>
-          <View className="w-10 h-10 bg-neutral-700 rounded-full items-center justify-center">
-            <MaterialIcons name="person" size={20} color="#A3A3A3" />
-          </View>
-          <View className="flex-1 ml-3">
-            <Text className="text-base font-semibold text-white">Você</Text>
-            <Text className="text-sm text-neutral-400">{profile?.xp || 890} pts</Text>
-          </View>
-          <View className="flex-row items-center bg-lime-500/20 px-2 py-1 rounded-full">
-            <MaterialIcons name="arrow-upward" size={14} color="#84CC16" />
-            <Text className="text-sm font-bold text-lime-400 ml-0.5">2</Text>
-          </View>
-        </Pressable>
 
-        {/* Melhores da Região - TOP */}
+        {/* Melhores da Região - Airbnb Style */}
         <View className="mb-6">
           <View className="flex-row items-center justify-between px-5 mb-1">
-            <View className="flex-row items-center gap-2">
-              <MaterialIcons name="star" size={18} color="#000" />
-              <Text className="text-base font-bold text-black">Melhores da região</Text>
-            </View>
+            <Text className="text-lg font-bold text-black">Melhores da região</Text>
             <Pressable onPress={() => router.push('/courts' as any)}>
-              <Text className="text-sm text-neutral-500">Ver todas</Text>
+              <Text className="text-sm font-medium text-neutral-500">Ver todas</Text>
             </Pressable>
           </View>
-          <Text className="text-sm text-neutral-500 px-5 mb-3">Top avaliadas em {selectedCity} - Centro</Text>
+          <Text className="text-sm text-neutral-500 px-5 mb-4">Top avaliadas em {selectedCity}</Text>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-5"
-            contentContainerStyle={{ gap: 12 }}
+            contentContainerStyle={{ gap: 16 }}
           >
             {MELHORES_REGIAO.map((court) => (
-              <Pressable
+              <CourtCard
                 key={court.id}
+                id={court.id}
+                name={court.name}
+                sport="Beach Tennis"
+                location={`${court.neighborhood} · ${court.distance}`}
+                rating={court.rating}
+                reviewCount={court.reviews}
+                pricePerHour={court.price || undefined}
+                isFree={court.price === 0}
+                courtType={court.type as 'publica' | 'privada' | 'particular'}
                 onPress={() => router.push(`/court/${court.id}` as any)}
-                className="w-44 bg-white rounded-2xl border border-neutral-200 overflow-hidden"
-              >
-                <View className="h-24 bg-neutral-200 items-center justify-center relative">
-                  <MaterialIcons name="image" size={32} color="#A3A3A3" />
-                  <View className="absolute top-2 left-2 px-2 py-0.5 bg-black rounded-full flex-row items-center">
-                    <MaterialIcons name="star" size={10} color="#fff" />
-                    <Text className="text-[10px] font-bold text-white ml-0.5">{court.rating}</Text>
-                  </View>
-                  {court.badge && (
-                    <View className="absolute top-2 right-2 px-2 py-0.5 bg-white rounded-full">
-                      <Text className="text-[10px] font-medium text-black">{court.badge}</Text>
-                    </View>
-                  )}
-                </View>
-                <View className="p-2.5">
-                  <Text className="font-semibold text-black text-sm" numberOfLines={1}>{court.name}</Text>
-                  <Text className="text-[11px] text-neutral-500">{court.neighborhood} · {court.distance}</Text>
-                  <View className="flex-row items-center justify-between mt-1.5">
-                    <View className="flex-row items-center gap-0.5">
-                      <MaterialIcons name="rate-review" size={12} color="#A3A3A3" />
-                      <Text className="text-[10px] text-neutral-500">{court.reviews} aval.</Text>
-                    </View>
-                    <Text className="text-xs font-bold text-black">R$ {court.price}/h</Text>
-                  </View>
-                </View>
-              </Pressable>
+                size="medium"
+              />
             ))}
           </ScrollView>
         </View>
 
-        {/* Você pode gostar - TOP */}
+        {/* Você pode gostar - Airbnb Style */}
         <View className="mb-6">
           <View className="flex-row items-center justify-between px-5 mb-1">
-            <View className="flex-row items-center gap-2">
-              <MaterialIcons name="auto-awesome" size={18} color="#000" />
-              <Text className="text-base font-bold text-black">Você pode gostar</Text>
-            </View>
+            <Text className="text-lg font-bold text-black">Feito para você</Text>
             <Pressable onPress={() => router.push('/courts' as any)}>
-              <Text className="text-sm text-neutral-500">Ver todas</Text>
+              <Text className="text-sm font-medium text-neutral-500">Ver todas</Text>
             </Pressable>
           </View>
-          <Text className="text-sm text-neutral-500 px-5 mb-3">Baseado no seu perfil e histórico</Text>
+          <Text className="text-sm text-neutral-500 px-5 mb-4">Baseado no seu perfil e histórico</Text>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-5"
-            contentContainerStyle={{ gap: 12 }}
+            contentContainerStyle={{ gap: 16 }}
           >
             {VOCE_PODE_GOSTAR.map((court) => (
-              <Pressable
+              <CourtCard
                 key={court.id}
+                id={court.id}
+                name={court.name}
+                sport={court.sport}
+                location={court.reason}
+                rating={court.rating}
+                pricePerHour={court.price || undefined}
+                isFree={court.price === 0}
+                courtType={court.type as 'publica' | 'privada' | 'particular'}
                 onPress={() => router.push(`/court/${court.id}` as any)}
-                className="w-44 bg-white rounded-2xl border border-neutral-200 overflow-hidden"
-              >
-                <View className="h-24 bg-neutral-200 items-center justify-center relative">
-                  <MaterialIcons name="image" size={32} color="#A3A3A3" />
-                  <View className="absolute top-2 left-2 px-2 py-0.5 bg-black rounded-full">
-                    <Text className="text-[10px] font-bold text-white">{court.type}</Text>
-                  </View>
-                  <View className="absolute bottom-2 left-2 px-2 py-0.5 bg-white rounded-full flex-row items-center">
-                    <MaterialIcons name="thumb-up" size={10} color="#22C55E" />
-                    <Text className="text-[10px] font-medium text-black ml-0.5">{court.match}% match</Text>
-                  </View>
-                </View>
-                <View className="p-2.5">
-                  <Text className="font-semibold text-black text-sm" numberOfLines={1}>{court.name}</Text>
-                  <View className="flex-row items-center gap-1 mt-0.5">
-                    <MaterialIcons name="star" size={12} color="#000" />
-                    <Text className="text-[11px] text-black font-medium">{court.rating}</Text>
-                    <Text className="text-[11px] text-neutral-500">· {court.sport}</Text>
-                  </View>
-                  <Text className="text-[10px] text-neutral-500 mt-1">{court.reason}</Text>
-                  {court.price && (
-                    <Text className="text-xs font-bold text-black mt-1">R$ {court.price}/h</Text>
-                  )}
-                </View>
-              </Pressable>
+                size="medium"
+              />
             ))}
           </ScrollView>
         </View>
@@ -470,8 +401,8 @@ export default function HomeScreen() {
                 key={sport}
                 onPress={() => setSelectedSport(selectedSport === sport ? null : sport)}
                 className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${selectedSport === sport || userSports.includes(sport)
-                    ? 'bg-black'
-                    : 'bg-white border border-neutral-200'
+                  ? 'bg-black'
+                  : 'bg-white border border-neutral-200'
                   }`}
               >
                 <MaterialIcons
@@ -539,94 +470,125 @@ export default function HomeScreen() {
         </Pressable>
 
         {/* Daily Challenge - Blue gradient */}
-        <Pressable
-          onPress={() => router.push('/challenges' as any)}
-          className="mx-5 mb-6 rounded-2xl overflow-hidden"
-        >
-          <LinearGradient
-            colors={['#38BDF8', '#0EA5E9', '#0284C7']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="p-4"
+        <View className="mx-5 mb-6">
+          <Pressable
+            onPress={() => router.push('/challenges' as any)}
+            style={{ borderRadius: 16, overflow: 'hidden' }}
           >
-            {/* Header Row */}
-            <View className="flex-row items-start mb-2">
-              {/* Icon Box */}
-              <View
-                className="w-12 h-12 rounded-xl items-center justify-center mr-3"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
-              >
-                <MaterialIcons name="bolt" size={26} color="#fff" />
-              </View>
-              {/* Title and XP */}
-              <View className="flex-1">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-lg font-bold text-white">Desafio Diário</Text>
-                  <View className="px-3 py-1 bg-white/20 rounded-lg">
-                    <Text className="text-sm font-bold text-white">+150 XP</Text>
-                  </View>
+            <LinearGradient
+              colors={['#38BDF8', '#0EA5E9', '#0284C7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ paddingHorizontal: 16, paddingVertical: 14 }}
+            >
+              {/* Header Row */}
+              <View className="flex-row items-center">
+                {/* Icon Box */}
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 12
+                  }}
+                >
+                  <MaterialIcons name="bolt" size={22} color="#fff" />
                 </View>
-                <Text className="text-white/90 text-sm mt-1" numberOfLines={2}>
-                  {activeChallenge?.challenge?.description || 'Jogue 2 partidas hoje para completar o desafio!'}
+                {/* Title */}
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff', flex: 1 }}>Desafio Diário</Text>
+                {/* XP Badge */}
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#fff' }}>+150 XP</Text>
+                </View>
+              </View>
+
+              {/* Description */}
+              <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 8 }} numberOfLines={1}>
+                {activeChallenge?.challenge?.description || 'Jogue 2 partidas hoje para completar o desafio!'}
+              </Text>
+
+              {/* Progress bar with counter */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3, overflow: 'hidden', marginRight: 12 }}>
+                  <View
+                    style={{
+                      height: '100%',
+                      backgroundColor: '#fff',
+                      borderRadius: 3,
+                      width: `${((activeChallenge?.progress || 1) / (activeChallenge?.challenge?.target || 2)) * 100}%`
+                    }}
+                  />
+                </View>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff' }}>
+                  {activeChallenge?.progress || 1}/{activeChallenge?.challenge?.target || 2}
                 </Text>
               </View>
-            </View>
-
-            {/* Progress bar with counter */}
-            <View className="flex-row items-center mt-2">
-              <View className="flex-1 h-3 bg-white/30 rounded-full overflow-hidden mr-3">
-                <View
-                  className="h-full bg-white rounded-full"
-                  style={{ width: `${((activeChallenge?.progress || 1) / (activeChallenge?.challenge?.target || 2)) * 100}%` }}
-                />
-              </View>
-              <Text className="text-base font-bold text-white">
-                {activeChallenge?.progress || 1}/{activeChallenge?.challenge?.target || 2}
-              </Text>
-            </View>
-          </LinearGradient>
-        </Pressable>
+            </LinearGradient>
+          </Pressable>
+        </View>
 
         {/* Jogos Acontecendo - List format */}
-        <View className="mx-5 mb-6 bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-          <View className="flex-row items-center justify-between p-4 border-b border-neutral-100">
-            <View className="flex-row items-center gap-2">
-              <View className="w-2 h-2 bg-lime-500 rounded-full" />
-              <Text className="text-base font-bold text-black">Jogos acontecendo</Text>
-            </View>
-            <Pressable onPress={() => router.push('/social' as any)}>
-              <Text className="text-sm text-neutral-500">Ver todos</Text>
-            </Pressable>
-          </View>
-
-          {JOGOS_ACONTECENDO.map((game, idx) => (
-            <Pressable
-              key={game.id}
-              onPress={() => router.push(`/match/${game.id}` as any)}
-              className={`flex-row items-center p-4 ${idx < JOGOS_ACONTECENDO.length - 1 ? 'border-b border-neutral-100' : ''}`}
-            >
-              <View className="w-12 h-12 bg-neutral-100 rounded-xl items-center justify-center">
-                <MaterialIcons name={game.icon as any} size={24} color="#525252" />
+        {jogosAcontecendo.length > 0 && (
+          <View className="mx-5 mb-6 bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+            <View className="flex-row items-center justify-between p-4 border-b border-neutral-100">
+              <View className="flex-row items-center gap-2">
+                <View className="w-2 h-2 bg-lime-500 rounded-full" />
+                <Text className="text-base font-bold text-black">Jogos acontecendo</Text>
               </View>
-              <View className="flex-1 ml-3">
-                <Text className="font-semibold text-black">{game.sport} · {game.time}</Text>
-                <Text className="text-sm text-neutral-500">{game.location} · Falta {game.spotsLeft}</Text>
-              </View>
-              <Pressable className="px-4 py-2 bg-lime-500 rounded-xl">
-                <Text className="text-sm font-semibold text-lime-950">Entrar</Text>
+              <Pressable onPress={() => router.push('/social' as any)}>
+                <Text className="text-sm text-neutral-500">Ver todos</Text>
               </Pressable>
-            </Pressable>
-          ))}
-        </View>
+            </View>
+
+            {jogosAcontecendo.map((game, idx) => (
+              <Pressable
+                key={game.id}
+                onPress={() => router.push(`/match/${game.id}` as any)}
+                className={`flex-row items-center p-4 ${idx < jogosAcontecendo.length - 1 ? 'border-b border-neutral-100' : ''}`}
+              >
+                <View className="w-12 h-12 bg-neutral-100 rounded-xl items-center justify-center">
+                  <MaterialIcons name={game.icon as any} size={24} color="#525252" />
+                </View>
+                <View className="flex-1 ml-3">
+                  <Text className="font-semibold text-black">{game.sport} · {game.time}</Text>
+                  <Text className="text-sm text-neutral-500">{game.location} · Falta {game.spotsLeft}</Text>
+                </View>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedInvite({
+                      id: game.id,
+                      message: `${game.sport} - Jogo ao vivo`,
+                      location: game.location,
+                      dateTime: `Hoje, ${game.time}`,
+                      senderName: 'Partida Aberta',
+                      participantsCount: 4 - game.spotsLeft,
+                      maxParticipants: 4,
+                    });
+                    setShowCheckInModal(true);
+                  }}
+                  className="px-4 py-2 bg-lime-500 rounded-xl"
+                >
+                  <Text className="text-sm font-semibold text-lime-950">Entrar</Text>
+                </Pressable>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         {/* Convites para você */}
         <InvitesSection
-          invites={invitesForSection}
+          invites={invites}
           onJoin={(inviteId) => {
-            const invite = invitesForSection.find((i) => i.id === inviteId);
+            const invite = invites.find((i) => i.id === inviteId);
             if (invite) {
               setSelectedInvite(invite);
               setShowCheckInModal(true);
+              // Remove invite from list after joining
+              setInvites((prev) => prev.filter((i) => i.id !== inviteId));
             }
           }}
         />
@@ -787,17 +749,15 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Quadras perto de você */}
+        {/* Quadras perto de você - Airbnb Style */}
         <View className="mb-6">
-          <View className="flex-row justify-between items-center px-5 mb-3">
-            <View className="flex-row items-center gap-2">
-              <MaterialIcons name="near-me" size={18} color="#000" />
-              <Text className="text-base font-bold text-black">Quadras perto de você</Text>
-            </View>
+          <View className="flex-row justify-between items-center px-5 mb-1">
+            <Text className="text-lg font-bold text-black">Quadras perto de você</Text>
             <Pressable onPress={() => router.push('/map')}>
-              <Text className="text-sm text-neutral-500">Ver mapa</Text>
+              <Text className="text-sm font-medium text-neutral-500">Ver mapa</Text>
             </Pressable>
           </View>
+          <Text className="text-sm text-neutral-500 px-5 mb-4">A poucos minutos de distância</Text>
 
           {courtsLoading ? (
             <View className="h-48 items-center justify-center">
@@ -813,32 +773,32 @@ export default function HomeScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               className="px-5"
-              contentContainerStyle={{ gap: 12 }}
+              contentContainerStyle={{ gap: 16 }}
             >
-              {courts.slice(0, 5).map((court: Court) => (
-                <Pressable
-                  key={court.id}
-                  onPress={() => router.push(`/court/${court.id}` as any)}
-                  className="w-64 bg-white rounded-2xl border border-neutral-200 overflow-hidden"
-                >
-                  <View className="h-32 bg-neutral-200 items-center justify-center">
-                    <MaterialIcons name="image" size={40} color="#A3A3A3" />
-                  </View>
-                  <View className="p-3">
-                    <Text className="font-semibold text-black" numberOfLines={1}>{court.name}</Text>
-                    <Text className="text-xs text-neutral-500 mt-0.5">{court.sport} • {court.city}</Text>
-                    <View className="flex-row items-center justify-between mt-2">
-                      <Text className="text-sm font-bold text-green-600">
-                        {court.is_free ? 'Gratuita' : `R$ ${court.price_per_hour}/h`}
-                      </Text>
-                      <View className="flex-row items-center gap-0.5">
-                        <MaterialIcons name="star" size={14} color="#000" />
-                        <Text className="text-xs font-medium text-black">{court.rating || '—'}</Text>
-                      </View>
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
+              {courts.slice(0, 5).map((court: Court) => {
+                // Map Court.type to courtType
+                const getCourtType = () => {
+                  if (court.is_free || court.type === 'public') return 'publica';
+                  if (court.type === 'private') return 'privada';
+                  return 'particular'; // club or others
+                };
+                return (
+                  <CourtCard
+                    key={court.id}
+                    id={court.id}
+                    name={court.name}
+                    sport={court.sport}
+                    location={court.city}
+                    address={court.address}
+                    rating={court.rating || undefined}
+                    pricePerHour={court.price_per_hour || undefined}
+                    isFree={court.is_free}
+                    courtType={getCourtType()}
+                    onPress={() => router.push(`/court/${court.id}` as any)}
+                    size="large"
+                  />
+                );
+              })}
             </ScrollView>
           )}
         </View>
@@ -1057,8 +1017,21 @@ export default function HomeScreen() {
             setSelectedInvite(null);
           }}
           onConfirm={async () => {
+            // Remove game from "Jogos acontecendo" list
+            setJogosAcontecendo((prev) => prev.filter((g) => g.id !== selectedInvite.id));
+            // Remove from invites list if applicable
+            setInvites((prev) => prev.filter((i) => i.id !== selectedInvite.id));
+
+            // Send notification
+            await notificationService.sendCheckInConfirmedNotification(
+              selectedInvite.message || 'Partida',
+              selectedInvite.location,
+              selectedInvite.dateTime,
+              100
+            );
+
             // TODO: Update database with check-in
-            console.log('Check-in confirmed for invite:', selectedInvite.id);
+            console.log('Check-in confirmed for:', selectedInvite.id);
           }}
           matchInfo={{
             title: selectedInvite.message || 'Partida de Beach Tennis',

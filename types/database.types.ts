@@ -300,6 +300,31 @@ export interface ChatMessage {
   user?: Profile;
 }
 
+export interface PrivateRanking {
+  id: string;
+  name: string;
+  description: string | null;
+  sport: string;
+  code: string;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrivateRankingMember {
+  id: string;
+  ranking_id: string;
+  user_id: string;
+  points: number;
+  wins: number;
+  losses: number;
+  joined_at: string;
+
+  // Relations
+  user?: Profile;
+  ranking?: PrivateRanking;
+}
+
 // Input types for creating/updating
 export type ProfileUpdate = Partial<
   Omit<Profile, 'id' | 'email' | 'created_at' | 'updated_at'>

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Profile } from '@/types/database.types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthState {
   user: User | null;
@@ -38,11 +39,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      console.log('[Auth] Initializing auth...');
+
+      // Debug: Check what's in AsyncStorage
+      const keys = await AsyncStorage.getAllKeys();
+      console.log('[Auth] AsyncStorage keys:', keys);
+
+      const supabaseKey = keys.find(k => k.includes('supabase'));
+      if (supabaseKey) {
+        const value = await AsyncStorage.getItem(supabaseKey);
+        console.log('[Auth] Supabase storage found:', supabaseKey, value ? 'has value' : 'empty');
+      } else {
+        console.log('[Auth] No supabase key found in AsyncStorage');
+      }
+
+      // Check for existing session
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      console.log('[Auth] getSession result:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        error: error?.message
+      });
+
+      if (error) {
+        console.error('[Auth] Error restoring session:', error);
+      }
 
       if (session?.user) {
+        console.log('[Auth] Session restored for user:', session.user.email);
         // Fetch profile
         const { data: profile } = await supabase
           .from('profiles')
@@ -57,6 +83,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isInitialized: true,
         });
       } else {
+        console.log('[Auth] No active session found');
         set({
           session: null,
           user: null,
@@ -66,7 +93,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       // Listen for auth changes
-      supabase.auth.onAuthStateChange(async (_event, session) => {
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state changed:', event);
+
         if (session?.user) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -87,7 +116,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           });
         }
       });
-    } catch {
+    } catch (error) {
+      console.error('Auth initialization error:', error);
       set({ isLoading: false, isInitialized: true });
     }
   },

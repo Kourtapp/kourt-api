@@ -247,6 +247,21 @@ class NotificationService {
     return this.scheduleMatchReminder(matchId, matchTitle, matchDate, 30);
   }
 
+  // Send check-in confirmed notification
+  async sendCheckInConfirmedNotification(
+    matchTitle: string,
+    location: string,
+    dateTime: string,
+    xpEarned: number = 100
+  ): Promise<string | null> {
+    return this.scheduleLocalNotification({
+      type: 'match_invite',
+      title: 'Check-in Confirmado! ✅',
+      body: `Você entrou em "${matchTitle}" - ${location} às ${dateTime}. +${xpEarned} XP`,
+      data: { matchTitle, location, dateTime, xpEarned },
+    });
+  }
+
   // Send message notification
   async sendMessageNotification(
     senderName: string,

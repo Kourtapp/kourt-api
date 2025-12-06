@@ -39,49 +39,55 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
 
   completeOnboarding: async () => {
     const { selectedSports, sportLevels, playFrequency, preferredSchedule, goals } = get();
-    const user = useAuthStore.getState().user;
 
-    if (!user) return;
+    // Ensure we have the latest user session
+    let user = useAuthStore.getState().user;
+    if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user || null;
+    }
+
+    if (!user) {
+      throw new Error('No authenticated user found');
+    }
 
     try {
-      // First, try to update existing profile
+      // Prepare data
+      const profileData = {
+        sports: selectedSports,
+        sport_levels: sportLevels,
+        play_frequency: playFrequency,
+        preferred_schedule: preferredSchedule,
+        goals: goals,
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Try to update existing profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          sports: selectedSports,
-          sport_levels: sportLevels,
-          play_frequency: playFrequency,
-          preferred_schedule: preferredSchedule,
-          goals: goals,
-          onboarding_completed: true,
-          onboarding_completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update(profileData)
         .eq('id', user.id);
 
-      // If update failed (profile doesn't exist), create it
+      // If update failed (likely no profile), create it
       if (updateError) {
-        console.log('Profile not found, creating new profile...');
-        const { error: insertError } = await supabase.from('profiles').insert({
+        console.log('Profile update failed, trying insert...', updateError.message);
+
+        const { error: insertError } = await supabase.from('profiles').upsert({
           id: user.id,
           email: user.email || '',
           name: user.user_metadata?.name || user.email?.split('@')[0] || '',
-          sports: selectedSports,
-          sport_levels: sportLevels,
-          play_frequency: playFrequency,
-          preferred_schedule: preferredSchedule,
-          goals: goals,
-          onboarding_completed: true,
-          onboarding_completed_at: new Date().toISOString(),
+          ...profileData
         });
 
         if (insertError) {
-          console.error('Error creating profile:', insertError);
+          console.error('Error creating/upserting profile:', insertError);
           throw insertError;
         }
       }
 
-      // Refresh profile in auth store
+      // Refresh profile in auth store to reflect changes in UI
       await useAuthStore.getState().refreshProfile();
       set({ isCompleted: true });
     } catch (error) {

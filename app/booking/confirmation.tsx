@@ -1,9 +1,26 @@
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useBookingStore } from '@/stores/useBookingStore';
 
 export default function ConfirmationScreen() {
+  const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
+  const { court, date, time, duration, reset } = useBookingStore();
+
+  const calculateEndTime = (startTime: string, hours: number) => {
+    const [h, m] = startTime.split(':').map(Number);
+    const endHour = h + hours;
+    return `${endHour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const handleGoHome = () => {
+    reset();
+    router.replace('/(tabs)');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1 items-center justify-center px-5">
@@ -16,7 +33,7 @@ export default function ConfirmationScreen() {
           Reserva Confirmada!
         </Text>
         <Text className="text-sm text-neutral-500 text-center mb-8">
-          Você receberá uma confirmação por email e notificação.
+          Sua reserva foi realizada com sucesso.
         </Text>
 
         {/* Booking Details */}
@@ -27,9 +44,11 @@ export default function ConfirmationScreen() {
             </View>
             <View className="flex-1 ml-3">
               <Text className="font-semibold text-black">
-                Arena Beach Tennis
+                {court?.name || 'Quadra'}
               </Text>
-              <Text className="text-sm text-neutral-500">Beach Tennis</Text>
+              <Text className="text-sm text-neutral-500">
+                {court?.sport || 'Esporte'}
+              </Text>
             </View>
           </View>
 
@@ -39,7 +58,7 @@ export default function ConfirmationScreen() {
               <View>
                 <Text className="text-xs text-neutral-500">Data</Text>
                 <Text className="text-sm font-medium text-black">
-                  Hoje, 15 de Janeiro
+                  {date ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR }) : 'Data não selecionada'}
                 </Text>
               </View>
             </View>
@@ -49,7 +68,7 @@ export default function ConfirmationScreen() {
               <View>
                 <Text className="text-xs text-neutral-500">Horário</Text>
                 <Text className="text-sm font-medium text-black">
-                  18:00 - 19:00
+                  {time ? `${time} - ${calculateEndTime(time, duration)}` : 'Horário não selecionado'}
                 </Text>
               </View>
             </View>
@@ -59,7 +78,7 @@ export default function ConfirmationScreen() {
               <View>
                 <Text className="text-xs text-neutral-500">Local</Text>
                 <Text className="text-sm font-medium text-black">
-                  Rua das Palmeiras, 123
+                  {court?.address || 'Endereço'}
                 </Text>
               </View>
             </View>
@@ -68,8 +87,10 @@ export default function ConfirmationScreen() {
           <View className="h-px bg-neutral-200 my-4" />
 
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-neutral-600">Total pago</Text>
-            <Text className="text-lg font-bold text-lime-600">R$ 80,00</Text>
+            <Text className="text-sm text-neutral-600">Valor</Text>
+            <Text className="text-lg font-bold text-lime-600">
+              {court?.is_free ? 'Gratuito' : `R$ ${((court?.price_per_hour || 0) * duration).toFixed(2)}`}
+            </Text>
           </View>
         </View>
 
@@ -79,7 +100,7 @@ export default function ConfirmationScreen() {
             <MaterialIcons name="star" size={24} color="#1A2E05" />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-lime-500 font-bold">+50 XP</Text>
+            <Text className="text-lime-500 font-bold">+25 XP</Text>
             <Text className="text-white/60 text-sm">Reserva realizada!</Text>
           </View>
         </View>
@@ -87,7 +108,7 @@ export default function ConfirmationScreen() {
         {/* Actions */}
         <View className="w-full gap-3">
           <Pressable
-            onPress={() => router.push('/match/create' as any)}
+            onPress={() => router.push({ pathname: '/match/create', params: { bookingId } } as any)}
             className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-2"
           >
             <MaterialIcons name="group-add" size={20} color="#FFF" />
@@ -95,7 +116,7 @@ export default function ConfirmationScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace('/(tabs)')}
+            onPress={handleGoHome}
             className="w-full py-4 bg-neutral-100 rounded-2xl flex-row items-center justify-center"
           >
             <Text className="text-black font-semibold">Voltar ao Início</Text>

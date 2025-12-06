@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -48,18 +49,22 @@ export function useGoogleAuth() {
         // Verificar se o perfil já existe
         const { data: existingProfile } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, onboarding_completed')
           .eq('id', data.user.id)
           .single();
 
+        let isNewUser = false;
+
         // Se não existir, criar o perfil
         if (!existingProfile) {
+          isNewUser = true;
           const { error: profileError } = await supabase.from('profiles').insert({
             id: data.user.id,
             email: data.user.email || '',
             name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
             avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
             auth_provider: 'google',
+            onboarding_completed: false,
           });
 
           if (profileError) {
@@ -69,6 +74,13 @@ export function useGoogleAuth() {
 
         // Atualizar o perfil no store
         await refreshProfile();
+
+        // Navegar baseado no status do onboarding
+        if (isNewUser || !existingProfile?.onboarding_completed) {
+          router.replace('/(onboarding)/welcome');
+        } else {
+          router.replace('/(tabs)');
+        }
       }
     } catch (err) {
       console.error('Google auth error:', err);

@@ -148,14 +148,14 @@ export default function SubscriptionScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <LinearGradient
-          colors={['#F59E0B', '#D97706', '#B45309']}
+          colors={['#171717', '#262626', '#404040']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="mx-4 mt-4 p-6 rounded-3xl"
+          className="mx-4 mt-4 p-6 rounded-3xl border border-neutral-800"
         >
           <View className="items-center">
-            <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center mb-3">
-              <MaterialIcons name="star" size={36} color="#fff" />
+            <View className="w-16 h-16 bg-amber-500/20 rounded-2xl items-center justify-center mb-3 border border-amber-500/30">
+              <MaterialIcons name="star" size={36} color="#F59E0B" />
             </View>
             <Text className="text-2xl font-bold text-white">Kourt PRO</Text>
             <Text className="text-white/80 text-center mt-2">
@@ -172,11 +172,10 @@ export default function SubscriptionScreen() {
             {/* Monthly */}
             <Pressable
               onPress={() => setSelectedPlan('monthly')}
-              className={`flex-1 p-4 rounded-2xl border-2 ${
-                selectedPlan === 'monthly'
-                  ? 'border-amber-500 bg-amber-50'
-                  : 'border-neutral-200 bg-white'
-              }`}
+              className={`flex-1 p-4 rounded-2xl border-2 ${selectedPlan === 'monthly'
+                ? 'border-amber-500 bg-amber-50'
+                : 'border-neutral-200 bg-white'
+                }`}
             >
               <Text className="text-sm font-medium text-neutral-500">Mensal</Text>
               <Text className="text-2xl font-bold text-black mt-1">
@@ -188,15 +187,14 @@ export default function SubscriptionScreen() {
             {/* Yearly */}
             <Pressable
               onPress={() => setSelectedPlan('yearly')}
-              className={`flex-1 p-4 rounded-2xl border-2 relative ${
-                selectedPlan === 'yearly'
-                  ? 'border-amber-500 bg-amber-50'
-                  : 'border-neutral-200 bg-white'
-              }`}
+              className={`flex-1 p-4 rounded-2xl border-2 relative ${selectedPlan === 'yearly'
+                ? 'border-amber-500 bg-amber-50'
+                : 'border-neutral-200 bg-white'
+                }`}
             >
               {plans.yearly.savings && (
-                <View className="absolute -top-2 -right-2 px-2 py-1 bg-green-500 rounded-lg">
-                  <Text className="text-[10px] font-bold text-white">-{plans.yearly.savings}</Text>
+                <View className="absolute -top-3 -right-2 px-3 py-1 bg-black rounded-full border border-amber-500 shadow-sm">
+                  <Text className="text-[10px] font-bold text-amber-500">MELHOR VALOR</Text>
                 </View>
               )}
               <Text className="text-sm font-medium text-neutral-500">Anual</Text>

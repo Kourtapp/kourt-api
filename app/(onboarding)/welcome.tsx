@@ -31,14 +31,14 @@ export default function WelcomeScreen() {
       {/* Content */}
       <View className="flex-1 px-5 justify-center items-center">
         {/* Illustration */}
-        <View className="w-32 h-32 bg-lime-100 rounded-full items-center justify-center mb-8">
-          <View className="flex-row gap-2">
-            <Text className="text-3xl">🎾</Text>
-            <Text className="text-3xl">⚽</Text>
+        <View className="w-32 h-32 bg-neutral-100 rounded-full items-center justify-center mb-8">
+          <View className="flex-row gap-3">
+            <MaterialIcons name="sports-tennis" size={28} color="#000" />
+            <MaterialIcons name="sports-soccer" size={28} color="#000" />
           </View>
-          <View className="flex-row gap-2 mt-1">
-            <Text className="text-3xl">🏀</Text>
-            <Text className="text-3xl">🏐</Text>
+          <View className="flex-row gap-3 mt-2">
+            <MaterialIcons name="sports-basketball" size={28} color="#000" />
+            <MaterialIcons name="sports-volleyball" size={28} color="#000" />
           </View>
         </View>
 

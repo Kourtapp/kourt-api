@@ -93,7 +93,7 @@ export default function SportsScreen() {
                     <MaterialIcons
                       name="check-circle"
                       size={20}
-                      color="#84CC16"
+                      color="#FFF"
                     />
                   )}
                 </View>

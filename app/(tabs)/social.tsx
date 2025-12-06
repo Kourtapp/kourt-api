@@ -1,8 +1,8 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const tabs = ['Feed', 'Partidas', 'Torneios'];
@@ -122,6 +122,77 @@ const mockTournaments = [
 
 export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(['Todos']);
+  const [registeredTournaments, setRegisteredTournaments] = useState<string[]>([]);
+
+  // Filter tournaments based on selected filters
+  const filteredTournaments = useMemo(() => {
+    if (selectedFilters.includes('Todos')) {
+      return mockTournaments;
+    }
+
+    return mockTournaments.filter((tournament) => {
+      // Check sport filters
+      if (selectedFilters.includes(tournament.sport)) {
+        return true;
+      }
+      // Check "Grátis" filter
+      if (selectedFilters.includes('Grátis') && tournament.entryFee === 'Grátis') {
+        return true;
+      }
+      return false;
+    });
+  }, [selectedFilters]);
+
+  // Handle tournament registration
+  const handleRegister = (tournament: typeof mockTournaments[0]) => {
+    if (registeredTournaments.includes(tournament.id)) {
+      Alert.alert(
+        'Já inscrito',
+        `Você já está inscrito no ${tournament.title}`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Confirmar Inscrição',
+      `Deseja se inscrever no ${tournament.title}?\n\nTaxa: ${tournament.entryFee}\nData: ${tournament.date}\nLocal: ${tournament.location}`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: () => {
+            setRegisteredTournaments((prev) => [...prev, tournament.id]);
+            Alert.alert(
+              'Inscrição Confirmada! ✅',
+              `Você está inscrito no ${tournament.title}. Boa sorte!`,
+              [{ text: 'OK' }]
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  const toggleFilter = (filter: string) => {
+    if (filter === 'Todos') {
+      setSelectedFilters(['Todos']);
+      return;
+    }
+
+    setSelectedFilters((prev) => {
+      // If clicking other filter, remove 'Todos'
+      const withoutTodos = prev.filter((f) => f !== 'Todos');
+
+      if (prev.includes(filter)) {
+        const newFilters = withoutTodos.filter((f) => f !== filter);
+        return newFilters.length === 0 ? ['Todos'] : newFilters;
+      } else {
+        return [...withoutTodos, filter];
+      }
+    });
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#fafafa]">
@@ -150,14 +221,12 @@ export default function SocialScreen() {
           <Pressable
             key={tab}
             onPress={() => setActiveTab(index)}
-            className={`flex-1 py-3 items-center border-b-2 ${
-              activeTab === index ? 'border-black' : 'border-transparent'
-            }`}
+            className={`flex-1 py-3 items-center border-b-2 ${activeTab === index ? 'border-black' : 'border-transparent'
+              }`}
           >
             <Text
-              className={`text-sm font-medium ${
-                activeTab === index ? 'text-black' : 'text-neutral-500'
-              }`}
+              className={`text-sm font-medium ${activeTab === index ? 'text-black' : 'text-neutral-500'
+                }`}
             >
               {tab}
             </Text>
@@ -352,46 +421,60 @@ export default function SocialScreen() {
               className="mb-4 rounded-2xl overflow-hidden"
             >
               <LinearGradient
-                colors={['#84CC16', '#65A30D']}
+                colors={['#171717', '#262626']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 className="p-4 flex-row items-center"
               >
-                <View className="w-12 h-12 bg-white/20 rounded-xl items-center justify-center">
-                  <MaterialIcons name="emoji-events" size={24} color="#fff" />
+                <View className="w-12 h-12 bg-amber-500/20 rounded-xl items-center justify-center">
+                  <MaterialIcons name="emoji-events" size={24} color="#F59E0B" />
                 </View>
                 <View className="flex-1 ml-3">
                   <View className="flex-row items-center gap-2">
                     <Text className="text-base font-bold text-white">Criar Torneio</Text>
-                    <View className="px-2 py-0.5 bg-white/20 rounded">
-                      <Text className="text-[10px] font-bold text-white">PRO</Text>
+                    <View className="px-2 py-0.5 bg-amber-500 rounded">
+                      <Text className="text-[10px] font-bold text-black">PRO</Text>
                     </View>
                   </View>
-                  <Text className="text-sm text-white/80">Organize seu próprio campeonato</Text>
+                  <Text className="text-sm text-neutral-400">Organize seu próprio campeonato</Text>
                 </View>
-                <MaterialIcons name="chevron-right" size={24} color="#fff" />
+                <MaterialIcons name="chevron-right" size={24} color="#F59E0B" />
               </LinearGradient>
             </Pressable>
 
             {/* Filter chips */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
               <View className="flex-row gap-2">
-                {['Todos', 'Beach Tennis', 'Padel', 'Tênis', 'Grátis'].map((filter, idx) => (
-                  <Pressable
-                    key={filter}
-                    className={`px-4 py-2 rounded-full ${idx === 0 ? 'bg-black' : 'bg-white border border-neutral-200'}`}
-                  >
-                    <Text className={`text-sm font-medium ${idx === 0 ? 'text-white' : 'text-neutral-700'}`}>
-                      {filter}
-                    </Text>
-                  </Pressable>
-                ))}
+                {['Todos', 'Beach Tennis', 'Padel', 'Tênis', 'Grátis'].map((filter) => {
+                  const isSelected = selectedFilters.includes(filter);
+                  return (
+                    <Pressable
+                      key={filter}
+                      onPress={() => toggleFilter(filter)}
+                      className={`px-4 py-2 rounded-full ${isSelected ? 'bg-black' : 'bg-white border border-neutral-200'
+                        }`}
+                    >
+                      <Text
+                        className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-neutral-700'
+                          }`}
+                      >
+                        {filter}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </ScrollView>
 
             {/* Tournaments list */}
             <View className="gap-4">
-              {mockTournaments.map((tournament) => (
+              {filteredTournaments.length === 0 ? (
+                <View className="bg-white rounded-2xl border border-neutral-200 p-8 items-center">
+                  <MaterialIcons name="search-off" size={40} color="#A3A3A3" />
+                  <Text className="text-base font-semibold text-neutral-700 mt-3">Nenhum torneio encontrado</Text>
+                  <Text className="text-sm text-neutral-500 text-center mt-1">Tente mudar os filtros para encontrar torneios</Text>
+                </View>
+              ) : filteredTournaments.map((tournament) => (
                 <Pressable
                   key={tournament.id}
                   onPress={() => router.push(`/tournament/${tournament.id}` as any)}
@@ -471,11 +554,28 @@ export default function SocialScreen() {
                           {tournament.entryFee}
                         </Text>
                       </View>
-                      <Pressable className="px-4 py-2 bg-black rounded-xl">
-                        <Text className="text-sm font-semibold text-white">
-                          {tournament.status === 'inscricoes_abertas' ? 'Inscrever-se' : 'Ver detalhes'}
-                        </Text>
-                      </Pressable>
+                      {registeredTournaments.includes(tournament.id) ? (
+                        <View className="flex-row items-center gap-1 px-4 py-2 bg-lime-100 rounded-xl">
+                          <MaterialIcons name="check-circle" size={16} color="#22C55E" />
+                          <Text className="text-sm font-semibold text-lime-700">Inscrito</Text>
+                        </View>
+                      ) : (
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            if (tournament.status === 'inscricoes_abertas') {
+                              handleRegister(tournament);
+                            } else {
+                              router.push(`/tournament/${tournament.id}` as any);
+                            }
+                          }}
+                          className="px-4 py-2 bg-black rounded-xl"
+                        >
+                          <Text className="text-sm font-semibold text-white">
+                            {tournament.status === 'inscricoes_abertas' ? 'Inscrever-se' : 'Ver detalhes'}
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
                   </View>
                 </Pressable>

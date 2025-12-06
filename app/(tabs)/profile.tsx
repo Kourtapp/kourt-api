@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,26 +8,33 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
-import { useAchievements, useUserMatches, useBookings } from '@/hooks';
+import { useAchievements, useUserMatches, useBookings, useCourts } from '@/hooks';
 import { ProfileCheckInModal } from '@/components/modals/ProfileCheckInModal';
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const { user, profile, signOut, isInitialized } = useAuthStore();
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const {
+    courts,
+    loading: loadingCourts,
+    refetch: fetchCourts,
+  } = useCourts();
   const { achievements } = useAchievements(user?.id);
   const { matches } = useUserMatches(user?.id);
   const { bookings } = useBookings(user?.id);
 
   const [activeTab, setActiveTab] = useState<'partidas' | 'estatisticas'>('partidas');
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
-  const [showCheckIn, setShowCheckIn] = useState(false);
+
 
   const handleLogout = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
@@ -234,8 +241,7 @@ export default function ProfileScreen() {
                 <Pressable
                   key={sport}
                   onPress={() => setSelectedSport(selectedSport === sport ? null : sport)}
-                  className={`flex-row items-center gap-2 px-4 py-2 rounded-full border ${selectedSport === sport ? 'bg-black border-black' : 'bg-white border-neutral-200'
-                    }`}
+                  className={`flex-row items-center gap-2 px-4 py-2 rounded-full border ${selectedSport === sport ? 'bg-black border-black' : 'bg-white border-neutral-200'}`}
                 >
                   <MaterialIcons
                     name="sports-tennis"
@@ -416,11 +422,9 @@ function StatisticsTab({ totalMatches, totalHours, completedMatches }: {
           <Pressable
             key={year}
             onPress={() => setSelectedYear(year)}
-            className={`px-4 py-2 rounded-full ${selectedYear === year ? 'bg-black' : 'bg-neutral-100'
-              }`}
+            className={`px-4 py-2 rounded-full ${selectedYear === year ? 'bg-black' : 'bg-neutral-100'}`}
           >
-            <Text className={`text-sm font-medium ${selectedYear === year ? 'text-white' : 'text-neutral-700'
-              }`}>
+            <Text className={`text-sm font-medium ${selectedYear === year ? 'text-white' : 'text-neutral-700'}`}>
               {year}
             </Text>
           </Pressable>
@@ -539,7 +543,7 @@ function StatisticsTab({ totalMatches, totalHours, completedMatches }: {
           { sport: 'Tênis', matches: 24, winRate: 54, color: '#22C55E' },
         ].map((item) => (
           <View key={item.sport} className="flex-row items-center py-3">
-            <View className={`w-12 h-12 rounded-xl items-center justify-center`} style={{ backgroundColor: `${item.color}20` }}>
+            <View className="w-12 h-12 rounded-xl items-center justify-center" style={{ backgroundColor: `${item.color}20` }}>
               <MaterialIcons name="sports-tennis" size={24} color={item.color} />
             </View>
             <View className="flex-1 ml-3">
@@ -608,6 +612,7 @@ function StatisticsTab({ totalMatches, totalHours, completedMatches }: {
               <Text className="font-semibold text-black">{court.name}</Text>
               <Text className="text-sm text-neutral-500">{court.matches} partidas · {court.winRate}% win rate</Text>
             </View>
+
             <Pressable>
               <MaterialIcons name="star-outline" size={24} color="#F59E0B" />
             </Pressable>

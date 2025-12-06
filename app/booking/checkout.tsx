@@ -12,6 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useMemo, useEffect } from 'react';
 import { useCourtDetail, useCreateBooking, useAvailableSlots } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
+import { useBookingStore } from '@/stores/useBookingStore';
 
 const durations = [
   { hours: 1, label: '1 hora' },
@@ -24,6 +25,7 @@ export default function CheckoutScreen() {
   const { user } = useAuthStore();
   const { court, loading: courtLoading, error } = useCourtDetail(courtId);
   const { createBooking, loading: bookingLoading } = useCreateBooking();
+  const { setCourt, setDate, setTime, setDuration } = useBookingStore();
 
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -152,10 +154,25 @@ export default function CheckoutScreen() {
         duration_hours: selectedDuration,
       });
 
-      router.push({
-        pathname: '/booking/confirmation',
-        params: { bookingId: booking.id },
-      } as any);
+      // Store booking data for confirmation screens
+      setCourt(court);
+      setDate(new Date(selectedDate + 'T12:00:00'));
+      setTime(selectedTime);
+      setDuration(selectedDuration);
+
+      // For paid courts, redirect to payment page
+      // For free courts, go directly to confirmation
+      if (!court.is_free && totalPrice > 0) {
+        router.push({
+          pathname: '/booking/payment',
+          params: { bookingId: booking.id },
+        } as any);
+      } else {
+        router.push({
+          pathname: '/booking/confirmation',
+          params: { bookingId: booking.id },
+        } as any);
+      }
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao realizar reserva');
     }

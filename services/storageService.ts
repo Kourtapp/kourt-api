@@ -1,6 +1,16 @@
 import { supabase } from '@/lib/supabase';
-import { readAsStringAsync } from 'expo-file-system';
+import { File } from 'expo-file-system/next';
 import { decode } from 'base64-arraybuffer';
+
+// Helper to convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
 export const storageService = {
   /**
@@ -8,10 +18,10 @@ export const storageService = {
    */
   async uploadAvatar(userId: string, imageUri: string): Promise<string | null> {
     try {
-      // Read file as base64
-      const base64 = await readAsStringAsync(imageUri, {
-        encoding: 'base64',
-      });
+      // Read file using new File API
+      const file = new File(imageUri);
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = arrayBufferToBase64(arrayBuffer);
 
       // Get file extension
       const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
@@ -80,9 +90,10 @@ export const storageService = {
     imageUri: string
   ): Promise<string | null> {
     try {
-      const base64 = await readAsStringAsync(imageUri, {
-        encoding: 'base64',
-      });
+      // Read file using new File API
+      const file = new File(imageUri);
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = arrayBufferToBase64(arrayBuffer);
 
       const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
       const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
@@ -94,13 +105,20 @@ export const storageService = {
           upsert: true,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Storage error [${bucket}]:`, error.message);
+        // Check if bucket doesn't exist
+        if (error.message?.includes('Bucket not found') || error.message?.includes('bucket')) {
+          console.error(`Bucket "${bucket}" não existe. Crie-o no Supabase Dashboard > Storage.`);
+        }
+        throw error;
+      }
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
 
       return urlData.publicUrl;
-    } catch (error) {
-      console.error('Error uploading image:', error);
+    } catch (error: any) {
+      console.error('Error uploading image:', error?.message || error);
       return null;
     }
   },

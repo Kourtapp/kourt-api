@@ -55,3 +55,4 @@ export { useNotifications } from './useNotifications';
 
 // Auth
 export { useGoogleAuth } from './useGoogleAuth';
+export { useAppleAuth } from './useAppleAuth';

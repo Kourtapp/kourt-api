@@ -7,14 +7,44 @@ import {
   ScrollView,
   Alert,
   Image,
+  Pressable,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, CreditCard, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, CreditCard, Calendar, ChevronDown } from 'lucide-react-native';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
+
+// Gerar lista de dias
+const days = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1) }));
+
+// Gerar lista de meses
+const months = [
+  { value: '01', label: 'Janeiro' },
+  { value: '02', label: 'Fevereiro' },
+  { value: '03', label: 'Março' },
+  { value: '04', label: 'Abril' },
+  { value: '05', label: 'Maio' },
+  { value: '06', label: 'Junho' },
+  { value: '07', label: 'Julho' },
+  { value: '08', label: 'Agosto' },
+  { value: '09', label: 'Setembro' },
+  { value: '10', label: 'Outubro' },
+  { value: '11', label: 'Novembro' },
+  { value: '12', label: 'Dezembro' },
+];
+
+// Gerar lista de anos (últimos 100 anos)
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 100 }, (_, i) => {
+  const year = currentYear - 13 - i;
+  return { value: String(year), label: String(year) };
+});
 
 // Formatar CPF: 000.000.000-00
 const formatCPF = (value: string): string => {
@@ -23,14 +53,6 @@ const formatCPF = (value: string): string => {
   if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
   if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
   return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
-};
-
-// Formatar data: DD/MM/AAAA
-const formatDate = (value: string): string => {
-  const numbers = value.replace(/\D/g, '').slice(0, 8);
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
-  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4)}`;
 };
 
 // Converter DD/MM/AAAA para AAAA-MM-DD (formato ISO)
@@ -88,8 +110,32 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Date picker state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+
   const { signUp, isLoading } = useAuthStore();
   const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithApple, isAppleAvailable } = useAppleAuth();
+
+  // Handle date selection
+  const handleDateConfirm = () => {
+    if (selectedDay && selectedMonth && selectedYear) {
+      setBirthDate(`${selectedDay}/${selectedMonth}/${selectedYear}`);
+    }
+    setShowDatePicker(false);
+  };
+
+  // Get formatted date for display
+  const getFormattedDate = () => {
+    if (!birthDate) return '';
+    const parts = birthDate.split('/');
+    if (parts.length !== 3) return birthDate;
+    const monthLabel = months.find(m => m.value === parts[1])?.label || parts[1];
+    return `${parts[0]} de ${monthLabel} de ${parts[2]}`;
+  };
 
   const handleRegister = async () => {
     if (password.length < 6) {
@@ -117,10 +163,11 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Novo usuário sempre vai para o onboarding
     Alert.alert(
       'Conta criada!',
-      'Verifique seu e-mail para confirmar sua conta.',
-      [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }],
+      'Vamos personalizar sua experiência.',
+      [{ text: 'Começar', onPress: () => router.replace('/(onboarding)/welcome') }],
     );
   };
 
@@ -173,24 +220,33 @@ export default function RegisterScreen() {
             />
 
             <Input
-              label="CPF"
+              label="CPF (opcional)"
               placeholder="000.000.000-00"
               value={cpf}
               onChangeText={(text) => setCpf(formatCPF(text))}
-              keyboardType="numeric"
+              keyboardType="number-pad"
               maxLength={14}
+              textContentType="none"
+              autoCorrect={false}
               icon={<CreditCard size={20} color="#9CA3AF" />}
             />
 
-            <Input
-              label="Data de nascimento"
-              placeholder="DD/MM/AAAA"
-              value={birthDate}
-              onChangeText={(text) => setBirthDate(formatDate(text))}
-              keyboardType="numeric"
-              maxLength={10}
-              icon={<Calendar size={20} color="#9CA3AF" />}
-            />
+            {/* Data de nascimento - Date Picker Button */}
+            <View className="w-full">
+              <Text className="text-sm font-medium text-gray-700 mb-1.5">
+                Data de nascimento
+              </Text>
+              <Pressable
+                onPress={() => setShowDatePicker(true)}
+                className="flex-row items-center bg-white border border-border rounded-xl px-4 py-3.5"
+              >
+                <Calendar size={20} color="#9CA3AF" />
+                <Text className={`flex-1 ml-3 text-base ${birthDate ? 'text-primary' : 'text-gray-400'}`}>
+                  {birthDate ? getFormattedDate() : 'Selecione sua data de nascimento'}
+                </Text>
+                <ChevronDown size={20} color="#9CA3AF" />
+              </Pressable>
+            </View>
 
             <View>
               <Input
@@ -199,8 +255,9 @@ export default function RegisterScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                textContentType="newPassword"
-                autoComplete="new-password"
+                textContentType="oneTimeCode"
+                autoComplete="off"
+                autoCorrect={false}
                 icon={<Lock size={20} color="#9CA3AF" />}
               />
               <TouchableOpacity
@@ -233,9 +290,26 @@ export default function RegisterScreen() {
             <View className="flex-1 h-px bg-gray-200" />
           </View>
 
-          {/* Google Button - Temporariamente desabilitado */}
-          {/* Configure EXPO_PUBLIC_GOOGLE_CLIENT_ID_* no .env para habilitar */}
-          {false && (
+          {/* Social Login Buttons */}
+          <View className="gap-3">
+            {/* Apple Sign In - Only on iOS */}
+            {isAppleAvailable && (
+              <Pressable
+                onPress={signInWithApple}
+                className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
+              >
+                <Image
+                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg' }}
+                  className="w-5 h-5"
+                  style={{ tintColor: '#fff' }}
+                />
+                <Text className="text-white font-semibold">
+                  Continuar com Apple
+                </Text>
+              </Pressable>
+            )}
+
+            {/* Google Sign In */}
             <Pressable
               onPress={signInWithGoogle}
               className="w-full py-4 bg-white border-2 border-neutral-200 rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-50"
@@ -248,7 +322,7 @@ export default function RegisterScreen() {
                 Continuar com Google
               </Text>
             </Pressable>
-          )}
+          </View>
 
           <View className="flex-row justify-center mt-6 mb-8">
             <Text className="text-gray-500">Já tem uma conta? </Text>
@@ -260,6 +334,111 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <SafeAreaView className="flex-1 bg-white">
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-5 py-4 border-b border-neutral-100">
+            <Pressable onPress={() => setShowDatePicker(false)}>
+              <Text className="text-base text-neutral-500">Cancelar</Text>
+            </Pressable>
+            <Text className="text-lg font-bold text-black">Data de Nascimento</Text>
+            <Pressable onPress={handleDateConfirm}>
+              <Text className="text-base font-semibold text-lime-600">Confirmar</Text>
+            </Pressable>
+          </View>
+
+          {/* Date Selectors */}
+          <View className="flex-1 flex-row px-4 py-6">
+            {/* Day */}
+            <View className="flex-1 mr-2">
+              <Text className="text-sm font-medium text-neutral-500 mb-2 text-center">Dia</Text>
+              <View className="flex-1 bg-neutral-50 rounded-xl overflow-hidden">
+                <FlatList
+                  data={days}
+                  keyExtractor={(item) => item.value}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingVertical: 100 }}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      onPress={() => setSelectedDay(item.value)}
+                      className={`py-3 px-4 items-center ${selectedDay === item.value ? 'bg-black' : ''}`}
+                    >
+                      <Text className={`text-lg ${selectedDay === item.value ? 'text-white font-bold' : 'text-neutral-700'}`}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            </View>
+
+            {/* Month */}
+            <View className="flex-1 mx-2">
+              <Text className="text-sm font-medium text-neutral-500 mb-2 text-center">Mês</Text>
+              <View className="flex-1 bg-neutral-50 rounded-xl overflow-hidden">
+                <FlatList
+                  data={months}
+                  keyExtractor={(item) => item.value}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingVertical: 100 }}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      onPress={() => setSelectedMonth(item.value)}
+                      className={`py-3 px-4 items-center ${selectedMonth === item.value ? 'bg-black' : ''}`}
+                    >
+                      <Text className={`text-base ${selectedMonth === item.value ? 'text-white font-bold' : 'text-neutral-700'}`}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            </View>
+
+            {/* Year */}
+            <View className="flex-1 ml-2">
+              <Text className="text-sm font-medium text-neutral-500 mb-2 text-center">Ano</Text>
+              <View className="flex-1 bg-neutral-50 rounded-xl overflow-hidden">
+                <FlatList
+                  data={years}
+                  keyExtractor={(item) => item.value}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingVertical: 100 }}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      onPress={() => setSelectedYear(item.value)}
+                      className={`py-3 px-4 items-center ${selectedYear === item.value ? 'bg-black' : ''}`}
+                    >
+                      <Text className={`text-lg ${selectedYear === item.value ? 'text-white font-bold' : 'text-neutral-700'}`}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Selected Date Preview */}
+          <View className="px-5 pb-8">
+            <View className="bg-neutral-100 rounded-xl p-4 items-center">
+              <Text className="text-sm text-neutral-500 mb-1">Data selecionada</Text>
+              <Text className="text-xl font-bold text-black">
+                {selectedDay && selectedMonth && selectedYear
+                  ? `${selectedDay} de ${months.find(m => m.value === selectedMonth)?.label} de ${selectedYear}`
+                  : 'Selecione dia, mês e ano'}
+              </Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
