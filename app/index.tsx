@@ -2,12 +2,9 @@ import { View, Text, Pressable, Image } from 'react-native';
 import { Link } from 'expo-router';
 import { Button } from '@/components/ui';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
-import { useAppleAuth } from '@/hooks/useAppleAuth';
-import { MaterialIcons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
   const { signInWithGoogle } = useGoogleAuth();
-  const { signInWithApple, isAppleAvailable } = useAppleAuth();
 
   return (
     <View className="flex-1 bg-background px-6 justify-center items-center">
@@ -19,19 +16,6 @@ export default function WelcomeScreen() {
       </View>
 
       <View className="w-full gap-3">
-        {/* Apple Sign In - Only on iOS */}
-        {isAppleAvailable && (
-          <Pressable
-            onPress={signInWithApple}
-            className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
-          >
-            <MaterialIcons name="apple" size={22} color="#fff" />
-            <Text className="text-white font-semibold text-base">
-              Continuar com Apple
-            </Text>
-          </Pressable>
-        )}
-
         {/* Google Sign In */}
         <Pressable
           onPress={signInWithGoogle}

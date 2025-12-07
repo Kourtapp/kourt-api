@@ -18,7 +18,6 @@ import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, CreditCard, Calendar, Chevron
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
-import { useAppleAuth } from '@/hooks/useAppleAuth';
 
 // Gerar lista de dias
 const days = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1) }));
@@ -118,7 +117,6 @@ export default function RegisterScreen() {
 
   const { signUp, isLoading } = useAuthStore();
   const { signInWithGoogle } = useGoogleAuth();
-  const { signInWithApple, isAppleAvailable } = useAppleAuth();
 
   // Handle date selection
   const handleDateConfirm = () => {
@@ -292,23 +290,6 @@ export default function RegisterScreen() {
 
           {/* Social Login Buttons */}
           <View className="gap-3">
-            {/* Apple Sign In - Only on iOS */}
-            {isAppleAvailable && (
-              <Pressable
-                onPress={signInWithApple}
-                className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
-              >
-                <Image
-                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg' }}
-                  className="w-5 h-5"
-                  style={{ tintColor: '#fff' }}
-                />
-                <Text className="text-white font-semibold">
-                  Continuar com Apple
-                </Text>
-              </Pressable>
-            )}
-
             {/* Google Sign In */}
             <Pressable
               onPress={signInWithGoogle}

@@ -132,19 +132,6 @@ export default function LoginScreen() {
 
           {/* Social Login Buttons */}
           <View className="gap-3">
-            {/* Apple Sign In - Only on iOS */}
-            {isAppleAvailable && (
-              <Pressable
-                onPress={signInWithApple}
-                className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center gap-3 active:bg-neutral-800"
-              >
-                <Text className="text-white text-lg">󰀵</Text>
-                <Text className="text-white font-semibold">
-                  Continuar com Apple
-                </Text>
-              </Pressable>
-            )}
-
             {/* Google Sign In */}
             <Pressable
               onPress={signInWithGoogle}

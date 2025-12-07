@@ -24,7 +24,7 @@ interface NotificationStore {
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
   notifications: [],
-  unreadCount: 5, // Initial count from mock data
+  unreadCount: 0,
 
   addNotification: (notification) => {
     const newNotification: Notification = {
