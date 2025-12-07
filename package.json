@@ -2,6 +2,15 @@
   "name": "kourt",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "expo": {
+    "install": {
+      "exclude": [
+        "@stripe/stripe-react-native",
+        "react-native-svg",
+        "react-native-worklets"
+      ]
+    }
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

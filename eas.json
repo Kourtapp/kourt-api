@@ -26,7 +26,8 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK": "1"
       }
     }
   },
