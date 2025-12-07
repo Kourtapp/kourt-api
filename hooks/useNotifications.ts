@@ -87,9 +87,11 @@ export function useNotifications() {
     scheduleMatchReminder: notificationService.scheduleMatchReminder.bind(notificationService),
     scheduleCheckInReminder: notificationService.scheduleCheckInReminder.bind(notificationService),
     sendMessageNotification: notificationService.sendMessageNotification.bind(notificationService),
+    sendMatchJoinedNotification: notificationService.sendMatchJoinedNotification.bind(notificationService),
     cancelNotification: notificationService.cancelNotification.bind(notificationService),
     cancelAllNotifications: notificationService.cancelAllNotifications.bind(notificationService),
     setBadgeCount: notificationService.setBadgeCount.bind(notificationService),
     getBadgeCount: notificationService.getBadgeCount.bind(notificationService),
+    incrementBadgeCount: notificationService.incrementBadgeCount.bind(notificationService),
   };
 }

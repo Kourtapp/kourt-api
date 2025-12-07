@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import * as Location from 'expo-location';
 import { useAuthStore } from '@/stores/authStore';
 import '../global.css';
 
@@ -79,6 +80,17 @@ export default function RootLayout() {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Request location permission on app start
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        await Location.requestForegroundPermissionsAsync();
+      }
+    };
+    requestLocationPermission();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

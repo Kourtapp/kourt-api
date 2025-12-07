@@ -17,16 +17,126 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import * as Sharing from 'expo-sharing';
+import { useAuthStore } from '@/stores/authStore';
+import { useSocialPostsStore } from '@/stores/socialPostsStore';
 
 type ResultType = 'victory' | 'defeat' | 'draw';
 
-const SPORTS = [
-  { id: 'beach', name: 'BeachTennis', icon: 'sports-tennis' },
-  { id: 'padel', name: 'Padel', icon: 'sports-tennis' },
-  { id: 'futebol', name: 'Futebol', icon: 'sports-soccer' },
-  { id: 'volei', name: 'Vôlei', icon: 'sports-volleyball' },
-  { id: 'basquete', name: 'Basquete', icon: 'sports-basketball' },
-  { id: 'tenis', name: 'Tênis', icon: 'sports-tennis' },
+interface SportMetric {
+  id: string;
+  label: string;
+  placeholder: string;
+  unit?: string;
+  keyboardType?: 'default' | 'number-pad';
+}
+
+interface Sport {
+  id: string;
+  name: string;
+  icon: string;
+  scoreFormat: 'sets' | 'goals' | 'points';
+  metrics: SportMetric[];
+}
+
+const SPORTS: Sport[] = [
+  {
+    id: 'beach',
+    name: 'Beach Tennis',
+    icon: 'sports-tennis',
+    scoreFormat: 'sets',
+    metrics: [
+      { id: 'aces', label: 'Aces', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'winners', label: 'Winners', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'double_faults', label: 'Duplas Faltas', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'unforced_errors', label: 'Erros não forçados', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'padel',
+    name: 'Padel',
+    icon: 'sports-tennis',
+    scoreFormat: 'sets',
+    metrics: [
+      { id: 'winners', label: 'Winners', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'smashes', label: 'Smashes', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'volleys', label: 'Voleios', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'unforced_errors', label: 'Erros não forçados', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'futebol',
+    name: 'Futebol',
+    icon: 'sports-soccer',
+    scoreFormat: 'goals',
+    metrics: [
+      { id: 'goals', label: 'Gols marcados', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'assists', label: 'Assistências', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'shots', label: 'Chutes ao gol', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'saves', label: 'Defesas', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'volei',
+    name: 'Vôlei',
+    icon: 'sports-volleyball',
+    scoreFormat: 'sets',
+    metrics: [
+      { id: 'aces', label: 'Aces de saque', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'attacks', label: 'Ataques', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'blocks', label: 'Bloqueios', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'digs', label: 'Defesas', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'basquete',
+    name: 'Basquete',
+    icon: 'sports-basketball',
+    scoreFormat: 'points',
+    metrics: [
+      { id: 'points', label: 'Pontos', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'rebounds', label: 'Rebotes', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'assists', label: 'Assistências', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'steals', label: 'Roubos de bola', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'three_pointers', label: 'Cestas de 3', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'tenis',
+    name: 'Tênis',
+    icon: 'sports-tennis',
+    scoreFormat: 'sets',
+    metrics: [
+      { id: 'aces', label: 'Aces', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'double_faults', label: 'Duplas Faltas', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'winners', label: 'Winners', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'unforced_errors', label: 'Erros não forçados', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'break_points', label: 'Break points', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'futevolei',
+    name: 'Futevôlei',
+    icon: 'sports-volleyball',
+    scoreFormat: 'sets',
+    metrics: [
+      { id: 'shark_attacks', label: 'Ataques de tubarão', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'headers', label: 'Cabeçadas', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'aces', label: 'Aces de saque', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
+  {
+    id: 'handebol',
+    name: 'Handebol',
+    icon: 'sports-handball',
+    scoreFormat: 'goals',
+    metrics: [
+      { id: 'goals', label: 'Gols', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'assists', label: 'Assistências', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'saves', label: 'Defesas (goleiro)', placeholder: '0', keyboardType: 'number-pad' },
+      { id: 'steals', label: 'Roubos de bola', placeholder: '0', keyboardType: 'number-pad' },
+    ],
+  },
 ];
 
 const XP_REWARDS = {
@@ -37,6 +147,8 @@ const XP_REWARDS = {
 };
 
 export default function RegisterMatchScreen() {
+  const { profile, user } = useAuthStore();
+  const { addPost } = useSocialPostsStore();
   const [photo, setPhoto] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState(SPORTS[0]);
   const [showSportPicker, setShowSportPicker] = useState(false);
@@ -48,6 +160,9 @@ export default function RegisterMatchScreen() {
   const [description, setDescription] = useState('');
   const [opponents, setOpponents] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [shareToInstagram, setShareToInstagram] = useState(false);
+  const [sportMetrics, setSportMetrics] = useState<Record<string, string>>({});
+  const [showMetrics, setShowMetrics] = useState(false);
 
   const calculateXP = () => {
     let xp = XP_REWARDS.base;
@@ -55,7 +170,35 @@ export default function RegisterMatchScreen() {
     if (myScore && opponentScore) xp += XP_REWARDS.metrics;
     if (description.length > 10) xp += XP_REWARDS.description;
     if (result === 'victory') xp += 50;
+    // Bonus XP for filling sport metrics
+    const filledMetrics = Object.values(sportMetrics).filter(v => v && v !== '0').length;
+    if (filledMetrics >= 2) xp += 20;
     return xp;
+  };
+
+  const updateMetric = (metricId: string, value: string) => {
+    setSportMetrics(prev => ({ ...prev, [metricId]: value }));
+  };
+
+  // Reset metrics when sport changes
+  const handleSportChange = (sport: Sport) => {
+    setSelectedSport(sport);
+    setShowSportPicker(false);
+    setSportMetrics({}); // Reset metrics for new sport
+  };
+
+  // Get score label based on sport format
+  const getScoreLabels = () => {
+    switch (selectedSport.scoreFormat) {
+      case 'sets':
+        return { you: 'SETS', opponent: 'SETS', placeholder: '0' };
+      case 'goals':
+        return { you: 'GOLS', opponent: 'GOLS', placeholder: '0' };
+      case 'points':
+        return { you: 'PONTOS', opponent: 'PONTOS', placeholder: '0' };
+      default:
+        return { you: 'VOCÊ', opponent: 'ADVERSÁRIO', placeholder: '0' };
+    }
   };
 
   const requestPermissions = async () => {
@@ -136,6 +279,27 @@ export default function RegisterMatchScreen() {
     }
   };
 
+  const shareToInstagramStories = async () => {
+    if (!photo) return;
+
+    try {
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Erro', 'Compartilhamento não disponível neste dispositivo');
+        return;
+      }
+
+      await Sharing.shareAsync(photo, {
+        mimeType: 'image/jpeg',
+        dialogTitle: 'Compartilhar no Instagram',
+        UTI: 'public.jpeg',
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      Alert.alert('Erro', 'Não foi possível compartilhar a imagem');
+    }
+  };
+
   const handleRegister = async () => {
     if (!myScore || !opponentScore) {
       Alert.alert('Atenção', 'Preencha o placar da partida.');
@@ -145,17 +309,44 @@ export default function RegisterMatchScreen() {
     setIsLoading(true);
 
     // Simular salvamento
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Criar e salvar post no feed social
+    addPost({
+      type: 'match_result',
+      user: {
+        id: user?.id,
+        name: profile?.name || 'Você',
+        avatar: profile?.avatar_url,
+        username: profile?.username ? `@${profile.username}` : undefined,
+      },
+      sport: selectedSport.name,
+      result: result,
+      score: `${myScore} x ${opponentScore}`,
+      venue: venue || 'Quadra não informada',
+      duration: duration ? `${duration} min` : undefined,
+      description: description,
+      photo: photo,
+      xpEarned: calculateXP(),
+      metrics: Object.keys(sportMetrics).length > 0 ? sportMetrics : undefined,
+    });
+
+    console.log('[RegisterMatch] Post added to social feed');
 
     setIsLoading(false);
 
+    // Share to Instagram if enabled
+    if (shareToInstagram && photo) {
+      await shareToInstagramStories();
+    }
+
     Alert.alert(
-      'Partida Registrada! 🎉',
-      `Você ganhou +${calculateXP()} XP`,
+      'Partida Registrada!',
+      `Você ganhou +${calculateXP()} XP\n\nSua partida foi publicada no feed!`,
       [
         {
           text: 'Ver no Feed',
-          onPress: () => router.replace('/(tabs)'),
+          onPress: () => router.replace('/(tabs)/social'),
         },
       ]
     );
@@ -256,10 +447,7 @@ export default function RegisterMatchScreen() {
                 {SPORTS.map((sport) => (
                   <TouchableOpacity
                     key={sport.id}
-                    onPress={() => {
-                      setSelectedSport(sport);
-                      setShowSportPicker(false);
-                    }}
+                    onPress={() => handleSportChange(sport)}
                     className={`flex-row items-center justify-between px-4 py-3 ${
                       sport.id === selectedSport.id ? 'bg-lime-50' : ''
                     }`}
@@ -321,28 +509,28 @@ export default function RegisterMatchScreen() {
             </View>
             <View className="flex-row items-center justify-center gap-4">
               <View className="flex-1 items-center">
-                <Text className="text-xs text-gray-400 mb-1">VOCÊ</Text>
+                <Text className="text-xs text-gray-400 mb-1">{getScoreLabels().you}</Text>
                 <TextInput
                   className="w-full text-center text-3xl font-bold text-gray-900 bg-gray-50 rounded-xl py-4"
-                  placeholder="0"
+                  placeholder={getScoreLabels().placeholder}
                   placeholderTextColor="#D1D5DB"
                   value={myScore}
                   onChangeText={setMyScore}
                   keyboardType="number-pad"
-                  maxLength={2}
+                  maxLength={3}
                 />
               </View>
               <Text className="text-2xl font-bold text-gray-300">×</Text>
               <View className="flex-1 items-center">
-                <Text className="text-xs text-gray-400 mb-1">ADVERSÁRIO</Text>
+                <Text className="text-xs text-gray-400 mb-1">{getScoreLabels().opponent}</Text>
                 <TextInput
                   className="w-full text-center text-3xl font-bold text-gray-900 bg-gray-50 rounded-xl py-4"
-                  placeholder="0"
+                  placeholder={getScoreLabels().placeholder}
                   placeholderTextColor="#D1D5DB"
                   value={opponentScore}
                   onChangeText={setOpponentScore}
                   keyboardType="number-pad"
-                  maxLength={2}
+                  maxLength={3}
                 />
               </View>
             </View>
@@ -363,6 +551,52 @@ export default function RegisterMatchScreen() {
               />
               <Text className="text-gray-400">min</Text>
             </View>
+          </View>
+
+          {/* Sport-Specific Metrics */}
+          <View className="px-4 pb-4">
+            <TouchableOpacity
+              onPress={() => setShowMetrics(!showMetrics)}
+              className="flex-row items-center justify-between mb-2"
+            >
+              <View className="flex-row items-center">
+                <Text className="text-sm font-medium text-gray-500">
+                  ESTATÍSTICAS DE {selectedSport.name.toUpperCase()}
+                </Text>
+                <View className="ml-2 bg-lime-100 px-2 py-0.5 rounded-full flex-row items-center">
+                  <MaterialIcons name="add" size={12} color="#84CC16" />
+                  <Text className="text-lime-700 font-bold text-[10px] ml-0.5">+20 XP</Text>
+                </View>
+              </View>
+              <MaterialIcons
+                name={showMetrics ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                size={24}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+
+            {showMetrics && (
+              <View className="bg-gray-50 rounded-xl p-4">
+                <View className="flex-row flex-wrap gap-3">
+                  {selectedSport.metrics.map((metric) => (
+                    <View key={metric.id} className="w-[47%]">
+                      <Text className="text-xs text-gray-500 mb-1">{metric.label}</Text>
+                      <TextInput
+                        className="text-center text-lg font-semibold text-gray-900 bg-white rounded-lg py-3 border border-gray-200"
+                        placeholder={metric.placeholder}
+                        placeholderTextColor="#D1D5DB"
+                        value={sportMetrics[metric.id] || ''}
+                        onChangeText={(value) => updateMetric(metric.id, value)}
+                        keyboardType={metric.keyboardType || 'number-pad'}
+                      />
+                    </View>
+                  ))}
+                </View>
+                <Text className="text-xs text-gray-400 mt-3 text-center">
+                  Preencha pelo menos 2 estatísticas para ganhar +20 XP
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Venue Input */}
@@ -456,7 +690,61 @@ export default function RegisterMatchScreen() {
                   <Text className="text-lime-400 text-xs">Vitória: +50</Text>
                 </View>
               )}
+              {Object.values(sportMetrics).filter(v => v && v !== '0').length >= 2 && (
+                <View className="bg-lime-500/20 px-2 py-1 rounded-full">
+                  <Text className="text-lime-400 text-xs">Estatísticas: +20</Text>
+                </View>
+              )}
             </View>
+          </View>
+
+          {/* Share Options */}
+          <View className="mx-4 mb-4">
+            <Text className="text-sm font-medium text-gray-500 mb-3">COMPARTILHAR</Text>
+
+            {/* Post to Kourt Feed */}
+            <View className="flex-row items-center justify-between p-4 bg-gray-50 rounded-xl mb-2">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 bg-black rounded-xl items-center justify-center">
+                  <Text className="text-lime-500 font-black text-sm">K</Text>
+                </View>
+                <View className="ml-3">
+                  <Text className="font-medium text-gray-900">Feed Kourt</Text>
+                  <Text className="text-xs text-gray-500">Publicar no feed social</Text>
+                </View>
+              </View>
+              <View className="w-6 h-6 bg-lime-500 rounded-full items-center justify-center">
+                <MaterialIcons name="check" size={16} color="#fff" />
+              </View>
+            </View>
+
+            {/* Share to Instagram */}
+            {photo && (
+              <TouchableOpacity
+                onPress={() => setShareToInstagram(!shareToInstagram)}
+                className="flex-row items-center justify-between p-4 bg-gray-50 rounded-xl"
+              >
+                <View className="flex-row items-center">
+                  <LinearGradient
+                    colors={['#833AB4', '#FD1D1D', '#F77737']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    className="w-10 h-10 rounded-xl items-center justify-center"
+                  >
+                    <MaterialIcons name="camera-alt" size={20} color="#fff" />
+                  </LinearGradient>
+                  <View className="ml-3">
+                    <Text className="font-medium text-gray-900">Instagram</Text>
+                    <Text className="text-xs text-gray-500">Compartilhar nos stories</Text>
+                  </View>
+                </View>
+                <View className={`w-6 h-6 rounded-full items-center justify-center ${
+                  shareToInstagram ? 'bg-lime-500' : 'bg-gray-200'
+                }`}>
+                  {shareToInstagram && <MaterialIcons name="check" size={16} color="#fff" />}
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Spacer for bottom button */}

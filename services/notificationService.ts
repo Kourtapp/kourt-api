@@ -275,6 +275,29 @@ class NotificationService {
       data: { chatId },
     });
   }
+
+  // Send match joined notification
+  async sendMatchJoinedNotification(
+    matchTitle: string,
+    location: string,
+    dateTime: string,
+    matchId: string
+  ): Promise<string | null> {
+    return this.scheduleLocalNotification({
+      type: 'match_invite',
+      title: 'Você entrou na partida! 🎾',
+      body: `${matchTitle} - ${location} às ${dateTime}`,
+      data: { matchId, matchTitle, location, dateTime },
+    });
+  }
+
+  // Increment badge count
+  async incrementBadgeCount(): Promise<number> {
+    const currentCount = await this.getBadgeCount();
+    const newCount = currentCount + 1;
+    await this.setBadgeCount(newCount);
+    return newCount;
+  }
 }
 
 export const notificationService = new NotificationService();

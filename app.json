@@ -27,7 +27,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Kourt usa sua localização para mostrar quadras próximas.",
         "NSCameraUsageDescription": "Kourt usa a câmera para adicionar fotos de partidas.",
-        "NSPhotoLibraryUsageDescription": "Kourt acessa suas fotos para compartilhar momentos."
+        "NSPhotoLibraryUsageDescription": "Kourt acessa suas fotos para compartilhar momentos.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -43,7 +44,9 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -80,9 +83,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
-      }
+        "projectId": "be6d6859-b88b-4bf9-8ad5-d88153674489"
+      },
+      "router": {}
     },
-    "owner": "kourt"
+    "owner": "bruno.camargo0498"
   }
 }

@@ -6,13 +6,15 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { useCourts, useMatches, useChallenges } from '@/hooks';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useCourts, useMatches, useChallenges, useNearbyCourts } from '@/hooks';
 import { Court, Match } from '@/types/database.types';
 import { CoachOverlay } from '@/components/coach-marks/CoachOverlay';
 import { useCoachStore } from '@/stores/useCoachStore';
@@ -110,6 +112,13 @@ const NOVOS_ESPORTES = [
   { id: '1', name: 'Vôlei', icon: 'sports-volleyball', courts: 8 },
   { id: '2', name: 'Handebol', icon: 'sports-handball', courts: 3 },
   { id: '3', name: 'Pickleball', icon: 'sports-tennis', courts: 12 },
+  { id: '4', name: 'Squash', icon: 'sports-tennis', courts: 5 },
+  { id: '5', name: 'Badminton', icon: 'sports-tennis', courts: 7 },
+  { id: '6', name: 'Futsal', icon: 'sports-soccer', courts: 15 },
+  { id: '7', name: 'Basquete', icon: 'sports-basketball', courts: 10 },
+  { id: '8', name: 'Tênis de Mesa', icon: 'sports-tennis', courts: 6 },
+  { id: '9', name: 'Rugby', icon: 'sports-rugby', courts: 2 },
+  { id: '10', name: 'Hockey', icon: 'sports-hockey', courts: 3 },
 ];
 
 // Mock best courts in region
@@ -132,16 +141,88 @@ const VOCE_PODE_GOSTAR = [
   { id: '6', name: 'Casa do Ténis', sport: 'Tênis', rating: 4.9, type: 'particular', price: 90, reason: 'Seu esporte favorito' },
 ];
 
+// Shuffle array function
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 export default function HomeScreen() {
   const { user, profile } = useAuthStore();
-  const [selectedSport, setSelectedSport] = useState<string | null>('beach-tennis');
+  const { unreadCount, addNotification } = useNotificationStore();
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [selectedCourtType, setSelectedCourtType] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('São Paulo');
+  const [selectedCity, setSelectedCity] = useState('Carregando...');
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedInvite, setSelectedInvite] = useState<any>(null);
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [shuffledSports, setShuffledSports] = useState(() => shuffleArray(NOVOS_ESPORTES));
+  const [shuffledCourts, setShuffledCourts] = useState(() => shuffleArray(MELHORES_REGIAO));
+  const [shuffledRecommendations, setShuffledRecommendations] = useState(() => shuffleArray(VOCE_PODE_GOSTAR));
+  const [refreshing, setRefreshing] = useState(false);
   const { hasSeenTutorial, isActive, checkTutorialStatus, startTutorial } =
     useCoachStore();
+
+  // Refresh suggestions on pull to refresh or when feed updates
+  const refreshSuggestions = useCallback(() => {
+    setShuffledSports(shuffleArray(NOVOS_ESPORTES));
+    setShuffledCourts(shuffleArray(MELHORES_REGIAO));
+    setShuffledRecommendations(shuffleArray(VOCE_PODE_GOSTAR));
+  }, []);
+
+  // Pull to refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    refreshSuggestions();
+    // Small delay to show the refresh indicator
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setRefreshing(false);
+  }, [refreshSuggestions]);
+
+  // Auto-detect location on mount
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setSelectedCity('São Paulo');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        setUserCoords({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        const [address] = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (address?.city) {
+          setSelectedCity(address.city);
+        } else if (address?.subregion) {
+          setSelectedCity(address.subregion);
+        } else {
+          setSelectedCity('São Paulo');
+        }
+      } catch {
+        setSelectedCity('São Paulo');
+      }
+    };
+
+    detectLocation();
+  }, []);
 
   useEffect(() => {
     checkTutorialStatus();
@@ -164,6 +245,13 @@ export default function HomeScreen() {
   );
   const { userChallenges } = useChallenges(user?.id);
 
+  // Nearby courts based on user location
+  const { courts: nearbyCourts, loading: nearbyLoading } = useNearbyCourts(
+    userCoords?.latitude,
+    userCoords?.longitude,
+    15, // 15km radius
+  );
+
   // Get current location
   const getCurrentLocation = async () => {
     setLoadingLocation(true);
@@ -173,13 +261,25 @@ export default function HomeScreen() {
         setLoadingLocation(false);
         return;
       }
-      const location = await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      // Update coordinates for nearby courts
+      setUserCoords({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
       const [address] = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
+
       if (address?.city) {
         setSelectedCity(address.city);
+      } else if (address?.subregion) {
+        setSelectedCity(address.subregion);
       }
     } catch {
       // Keep current city
@@ -197,6 +297,25 @@ export default function HomeScreen() {
     streak: profile?.streak || 7,
     victories: 165,
   }), [profile?.level, profile?.xp, profile?.xp_to_next_level, profile?.streak]);
+
+  // Filtered courts based on sport and court type
+  const filteredCourts = useMemo(() => {
+    return shuffledCourts.filter((court) => {
+      // Filter by court type
+      if (selectedCourtType && court.type !== selectedCourtType) return false;
+      return true;
+    });
+  }, [shuffledCourts, selectedCourtType]);
+
+  const filteredRecommendations = useMemo(() => {
+    return shuffledRecommendations.filter((court) => {
+      // Filter by sport
+      if (selectedSport && court.sport !== selectedSport) return false;
+      // Filter by court type
+      if (selectedCourtType && court.type !== selectedCourtType) return false;
+      return true;
+    });
+  }, [shuffledRecommendations, selectedSport, selectedCourtType]);
 
   const activeChallenge = userChallenges[0];
 
@@ -254,6 +373,14 @@ export default function HomeScreen() {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
         bounces={true}
         overScrollMode="always"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#000"
+            colors={['#000']}
+          />
+        }
       >
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 py-3">
@@ -284,9 +411,13 @@ export default function HomeScreen() {
               className="w-10 h-10 bg-white rounded-full items-center justify-center border border-neutral-200 relative"
             >
               <MaterialIcons name="notifications-none" size={20} color="#000" />
-              <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center">
-                <Text className="text-[10px] font-bold text-white">5</Text>
-              </View>
+              {unreadCount > 0 && (
+                <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center">
+                  <Text className="text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>
@@ -294,7 +425,7 @@ export default function HomeScreen() {
         {/* Search Bar */}
         <Pressable
           onPress={() => router.push('/(tabs)/map')}
-          className="mx-5 mb-6"
+          className="mx-5 mb-4"
         >
           <View className="flex-row items-center bg-white rounded-2xl border border-neutral-200 px-4 py-3">
             <MaterialIcons name="search" size={22} color="#A3A3A3" />
@@ -307,7 +438,103 @@ export default function HomeScreen() {
           </View>
         </Pressable>
 
+        {/* Filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="px-5 mb-6"
+          contentContainerStyle={{ gap: 8 }}
+        >
+          {/* All filter */}
+          <Pressable
+            onPress={() => {
+              setSelectedSport(null);
+              setSelectedCourtType(null);
+            }}
+            className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${
+              selectedSport === null && selectedCourtType === null
+                ? 'bg-black'
+                : 'bg-white border border-neutral-200'
+            }`}
+          >
+            <MaterialIcons
+              name="apps"
+              size={18}
+              color={selectedSport === null && selectedCourtType === null ? '#fff' : '#525252'}
+            />
+            <Text
+              className={`text-sm font-medium ${
+                selectedSport === null && selectedCourtType === null ? 'text-white' : 'text-neutral-700'
+              }`}
+            >
+              Todos
+            </Text>
+          </Pressable>
 
+          {/* Court Types */}
+          {[
+            { id: 'publica', label: 'Públicas', icon: 'park' },
+            { id: 'privada', label: 'Privadas', icon: 'business' },
+            { id: 'particular', label: 'Particulares', icon: 'home' },
+          ].map((type) => (
+            <Pressable
+              key={type.id}
+              onPress={() => setSelectedCourtType(selectedCourtType === type.id ? null : type.id)}
+              className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${
+                selectedCourtType === type.id
+                  ? 'bg-lime-500'
+                  : 'bg-white border border-neutral-200'
+              }`}
+            >
+              <MaterialIcons
+                name={type.icon as any}
+                size={18}
+                color={selectedCourtType === type.id ? '#1a2e05' : '#525252'}
+              />
+              <Text
+                className={`text-sm font-medium ${
+                  selectedCourtType === type.id ? 'text-lime-950' : 'text-neutral-700'
+                }`}
+              >
+                {type.label}
+              </Text>
+            </Pressable>
+          ))}
+
+          {/* Separator */}
+          <View className="w-px h-8 bg-neutral-200 self-center mx-1" />
+
+          {/* Sports */}
+          {['Beach Tennis', 'Padel', 'Futebol', 'Tênis', 'Vôlei', 'Basquete'].map((sport) => (
+            <Pressable
+              key={sport}
+              onPress={() => setSelectedSport(selectedSport === sport ? null : sport)}
+              className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${
+                selectedSport === sport
+                  ? 'bg-black'
+                  : 'bg-white border border-neutral-200'
+              }`}
+            >
+              <MaterialIcons
+                name={
+                  sport === 'Futebol' ? 'sports-soccer' :
+                  sport === 'Basquete' ? 'sports-basketball' :
+                  sport === 'Vôlei' ? 'sports-volleyball' :
+                  'sports-tennis'
+                }
+                size={18}
+                color={selectedSport === sport ? '#fff' : '#525252'}
+              />
+              <Text
+                className={`text-sm font-medium ${
+                  selectedSport === sport ? 'text-white' : 'text-neutral-700'
+                }`}
+              >
+                {sport}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
 
         {/* Melhores da Região - Airbnb Style */}
         <View className="mb-6">
@@ -319,29 +546,37 @@ export default function HomeScreen() {
           </View>
           <Text className="text-sm text-neutral-500 px-5 mb-4">Top avaliadas em {selectedCity}</Text>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-5"
-            contentContainerStyle={{ gap: 16 }}
-          >
-            {MELHORES_REGIAO.map((court) => (
-              <CourtCard
-                key={court.id}
-                id={court.id}
-                name={court.name}
-                sport="Beach Tennis"
-                location={`${court.neighborhood} · ${court.distance}`}
-                rating={court.rating}
-                reviewCount={court.reviews}
-                pricePerHour={court.price || undefined}
-                isFree={court.price === 0}
-                courtType={court.type as 'publica' | 'privada' | 'particular'}
-                onPress={() => router.push(`/court/${court.id}` as any)}
-                size="medium"
-              />
-            ))}
-          </ScrollView>
+          {filteredCourts.length === 0 ? (
+            <View className="mx-5 p-6 bg-white rounded-2xl border border-neutral-200 items-center">
+              <MaterialIcons name="search-off" size={32} color="#A3A3A3" />
+              <Text className="text-sm text-neutral-500 mt-2">Nenhuma quadra encontrada</Text>
+              <Text className="text-xs text-neutral-400">Tente ajustar os filtros</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="px-5"
+              contentContainerStyle={{ gap: 16 }}
+            >
+              {filteredCourts.map((court) => (
+                <CourtCard
+                  key={court.id}
+                  id={court.id}
+                  name={court.name}
+                  sport="Beach Tennis"
+                  location={`${court.neighborhood} · ${court.distance}`}
+                  rating={court.rating}
+                  reviewCount={court.reviews}
+                  pricePerHour={court.price || undefined}
+                  isFree={court.price === 0}
+                  courtType={court.type as 'publica' | 'privada' | 'particular'}
+                  onPress={() => router.push(`/court/${court.id}` as any)}
+                  size="medium"
+                />
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Você pode gostar - Airbnb Style */}
@@ -360,7 +595,7 @@ export default function HomeScreen() {
             className="px-5"
             contentContainerStyle={{ gap: 16 }}
           >
-            {VOCE_PODE_GOSTAR.map((court) => (
+            {filteredRecommendations.map((court) => (
               <CourtCard
                 key={court.id}
                 id={court.id}
@@ -374,49 +609,6 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/court/${court.id}` as any)}
                 size="medium"
               />
-            ))}
-          </ScrollView>
-        </View>
-
-
-
-
-
-
-
-        {/* Seus Esportes */}
-        <View className="mb-4">
-          <View className="flex-row items-center gap-1 px-5 mb-3">
-            <Text className="text-sm font-medium text-neutral-500">Seus esportes</Text>
-            <MaterialIcons name="info-outline" size={14} color="#A3A3A3" />
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-5"
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {['BeachTennis', 'Padel', 'Futebol', 'Tênis'].map((sport) => (
-              <Pressable
-                key={sport}
-                onPress={() => setSelectedSport(selectedSport === sport ? null : sport)}
-                className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${selectedSport === sport || userSports.includes(sport)
-                  ? 'bg-black'
-                  : 'bg-white border border-neutral-200'
-                  }`}
-              >
-                <MaterialIcons
-                  name={sport === 'Futebol' ? 'sports-soccer' : 'sports-tennis'}
-                  size={18}
-                  color={selectedSport === sport || userSports.includes(sport) ? '#fff' : '#525252'}
-                />
-                <Text
-                  className={`text-sm font-medium ${selectedSport === sport || userSports.includes(sport) ? 'text-white' : 'text-neutral-700'
-                    }`}
-                >
-                  {sport}
-                </Text>
-              </Pressable>
             ))}
           </ScrollView>
         </View>
@@ -544,21 +736,24 @@ export default function HomeScreen() {
             </View>
 
             {jogosAcontecendo.map((game, idx) => (
-              <Pressable
+              <View
                 key={game.id}
-                onPress={() => router.push(`/match/${game.id}` as any)}
                 className={`flex-row items-center p-4 ${idx < jogosAcontecendo.length - 1 ? 'border-b border-neutral-100' : ''}`}
               >
-                <View className="w-12 h-12 bg-neutral-100 rounded-xl items-center justify-center">
-                  <MaterialIcons name={game.icon as any} size={24} color="#525252" />
-                </View>
-                <View className="flex-1 ml-3">
-                  <Text className="font-semibold text-black">{game.sport} · {game.time}</Text>
-                  <Text className="text-sm text-neutral-500">{game.location} · Falta {game.spotsLeft}</Text>
-                </View>
                 <Pressable
-                  onPress={(e) => {
-                    e.stopPropagation();
+                  onPress={() => router.push(`/match/${game.id}` as any)}
+                  className="flex-row items-center flex-1"
+                >
+                  <View className="w-12 h-12 bg-neutral-100 rounded-xl items-center justify-center">
+                    <MaterialIcons name={game.icon as any} size={24} color="#525252" />
+                  </View>
+                  <View className="flex-1 ml-3">
+                    <Text className="font-semibold text-black">{game.sport} · {game.time}</Text>
+                    <Text className="text-sm text-neutral-500">{game.location} · Falta {game.spotsLeft}</Text>
+                  </View>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
                     setSelectedInvite({
                       id: game.id,
                       message: `${game.sport} - Jogo ao vivo`,
@@ -570,11 +765,11 @@ export default function HomeScreen() {
                     });
                     setShowCheckInModal(true);
                   }}
-                  className="px-4 py-2 bg-lime-500 rounded-xl"
+                  className="px-4 py-2 bg-lime-500 rounded-xl active:bg-lime-600"
                 >
                   <Text className="text-sm font-semibold text-lime-950">Entrar</Text>
                 </Pressable>
-              </Pressable>
+              </View>
             ))}
           </View>
         )}
@@ -757,13 +952,15 @@ export default function HomeScreen() {
               <Text className="text-sm font-medium text-neutral-500">Ver mapa</Text>
             </Pressable>
           </View>
-          <Text className="text-sm text-neutral-500 px-5 mb-4">A poucos minutos de distância</Text>
+          <Text className="text-sm text-neutral-500 px-5 mb-4">
+            {userCoords ? `Em ${selectedCity} e região` : 'A poucos minutos de distância'}
+          </Text>
 
-          {courtsLoading ? (
+          {nearbyLoading || (userCoords && nearbyCourts.length === 0 && courtsLoading) ? (
             <View className="h-48 items-center justify-center">
               <ActivityIndicator size="small" color="#000" />
             </View>
-          ) : courts.length === 0 ? (
+          ) : (nearbyCourts.length > 0 ? nearbyCourts : courts).length === 0 ? (
             <View className="mx-5 p-6 bg-white rounded-2xl border border-neutral-200 items-center">
               <MaterialIcons name="location-off" size={32} color="#A3A3A3" />
               <Text className="text-sm text-neutral-500 mt-2">Nenhuma quadra encontrada</Text>
@@ -775,7 +972,7 @@ export default function HomeScreen() {
               className="px-5"
               contentContainerStyle={{ gap: 16 }}
             >
-              {courts.slice(0, 5).map((court: Court) => {
+              {(nearbyCourts.length > 0 ? nearbyCourts : courts).slice(0, 5).map((court: Court) => {
                 // Map Court.type to courtType
                 const getCourtType = () => {
                   if (court.is_free || court.type === 'public') return 'publica';
@@ -890,7 +1087,33 @@ export default function HomeScreen() {
                     </View>
                   </View>
                   {match.current_players < match.max_players && (
-                    <Pressable className="px-4 py-2 bg-black rounded-xl">
+                    <Pressable
+                      className="px-4 py-2 bg-black rounded-xl"
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        const matchDate = new Date(match.date).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+                        const matchTime = match.start_time?.slice(0, 5) || '';
+
+                        // Add notification to store
+                        addNotification({
+                          type: 'match_joined',
+                          title: 'Você entrou na partida!',
+                          body: `${match.title} - ${matchDate} às ${matchTime}`,
+                          data: { matchId: match.id },
+                        });
+
+                        // Send push notification
+                        notificationService.sendMatchJoinedNotification(
+                          match.title,
+                          match.location || 'Local a definir',
+                          `${matchDate} ${matchTime}`,
+                          match.id
+                        );
+
+                        // Navigate to match details
+                        router.push(`/match/${match.id}` as any);
+                      }}
+                    >
                       <Text className="text-sm font-semibold text-white">Entrar</Text>
                     </Pressable>
                   )}
@@ -916,7 +1139,7 @@ export default function HomeScreen() {
             className="px-5"
             contentContainerStyle={{ gap: 12 }}
           >
-            {NOVOS_ESPORTES.map((sport) => (
+            {shuffledSports.map((sport) => (
               <Pressable
                 key={sport.id}
                 onPress={() => router.push(`/search?sport=${sport.name}` as any)}
@@ -1017,21 +1240,32 @@ export default function HomeScreen() {
             setSelectedInvite(null);
           }}
           onConfirm={async () => {
-            // Remove game from "Jogos acontecendo" list
-            setJogosAcontecendo((prev) => prev.filter((g) => g.id !== selectedInvite.id));
-            // Remove from invites list if applicable
-            setInvites((prev) => prev.filter((i) => i.id !== selectedInvite.id));
+            try {
+              // Remove game from "Jogos acontecendo" list
+              setJogosAcontecendo((prev) => prev.filter((g) => g.id !== selectedInvite.id));
+              // Remove from invites list if applicable
+              setInvites((prev) => prev.filter((i) => i.id !== selectedInvite.id));
 
-            // Send notification
-            await notificationService.sendCheckInConfirmedNotification(
-              selectedInvite.message || 'Partida',
-              selectedInvite.location,
-              selectedInvite.dateTime,
-              100
-            );
+              // Add notification to store (updates badge)
+              addNotification({
+                type: 'match_joined',
+                title: 'Você entrou na partida!',
+                body: `${selectedInvite.message || 'Partida'} - ${selectedInvite.location} às ${selectedInvite.dateTime}`,
+                data: { matchId: selectedInvite.id },
+              });
 
-            // TODO: Update database with check-in
-            console.log('Check-in confirmed for:', selectedInvite.id);
+              // Send push notification
+              await notificationService.sendMatchJoinedNotification(
+                selectedInvite.message || 'Partida',
+                selectedInvite.location,
+                selectedInvite.dateTime,
+                selectedInvite.id
+              );
+
+              console.log('Match joined and notification sent:', selectedInvite.id);
+            } catch (error) {
+              console.error('Error joining match:', error);
+            }
           }}
           matchInfo={{
             title: selectedInvite.message || 'Partida de Beach Tennis',

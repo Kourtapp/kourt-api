@@ -157,7 +157,7 @@ export default function MatchDetailScreen() {
             <View className="flex-row items-center gap-2 mb-3">
               <View className="px-2 py-1 bg-lime-500 rounded-full">
                 <Text className="text-xs font-bold text-lime-950">
-                  {match.sport}
+                  {match.sport || 'Esporte'}
                 </Text>
               </View>
               {match.is_public && (
@@ -172,7 +172,7 @@ export default function MatchDetailScreen() {
               )}
             </View>
             <Text className="text-2xl font-bold text-white mb-2">
-              {match.title}
+              {match.title || 'Partida'}
             </Text>
             <View className="flex-row items-center gap-4">
               <View className="flex-row items-center gap-1">
@@ -184,7 +184,7 @@ export default function MatchDetailScreen() {
               <View className="flex-row items-center gap-1">
                 <MaterialIcons name="schedule" size={16} color="#A3A3A3" />
                 <Text className="text-sm text-white/70">
-                  {match.start_time?.slice(0, 5)}
+                  {match.start_time?.slice(0, 5) || '00:00'}
                 </Text>
               </View>
             </View>
@@ -304,7 +304,7 @@ export default function MatchDetailScreen() {
                 <View>
                   <Text className="text-xs text-neutral-500">Nível</Text>
                   <Text className="font-medium text-black">
-                    {getLevelLabel(match.level)}
+                    {getLevelLabel(match.level || 'any')}
                   </Text>
                 </View>
               </View>
@@ -366,7 +366,7 @@ export default function MatchDetailScreen() {
                     {organizer.name || 'Usuário'}
                   </Text>
                   <View className="flex-row items-center gap-2 mt-0.5">
-                    {organizer.rating && (
+                    {organizer.rating ? (
                       <>
                         <View className="flex-row items-center gap-0.5">
                           <MaterialIcons
@@ -380,7 +380,7 @@ export default function MatchDetailScreen() {
                         </View>
                         <Text className="text-xs text-neutral-400">•</Text>
                       </>
-                    )}
+                    ) : null}
                     <Text className="text-xs text-neutral-600">
                       Nível {organizer.level || 1}
                     </Text>

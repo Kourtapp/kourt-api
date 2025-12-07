@@ -126,7 +126,7 @@ export default function CreateMatchScreen() {
         max_players: maxPlayers,
         level: selectedLevel as 'beginner' | 'intermediate' | 'advanced' | 'any' | 'pro',
         is_public: visibility === 'public',
-        court_id: selectedCourt || undefined,
+        ...(selectedCourt && { court_id: selectedCourt }),
       };
 
       console.log('Creating match with input:', input);

@@ -34,7 +34,7 @@
     "production": {
       "ios": {
         "appleId": "brunokiki_28@hotmail.com",
-        "ascAppId": ""
+        "ascAppId": "6756223369"
       },
       "android": {
         "serviceAccountKeyPath": "./google-services.json",

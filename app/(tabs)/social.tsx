@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState, useMemo } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSocialPostsStore, SocialPost } from '@/stores/socialPostsStore';
 
 const tabs = ['Feed', 'Partidas', 'Torneios'];
 
@@ -124,6 +125,55 @@ export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(['Todos']);
   const [registeredTournaments, setRegisteredTournaments] = useState<string[]>([]);
+  const [likedPosts, setLikedPosts] = useState<string[]>([]);
+  const { posts: userPosts, likePost, unlikePost } = useSocialPostsStore();
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'agora';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+  };
+
+  // Get result label in Portuguese
+  const getResultLabel = (result: string) => {
+    switch (result) {
+      case 'victory': return 'Vitória';
+      case 'defeat': return 'Derrota';
+      case 'draw': return 'Empate';
+      default: return result;
+    }
+  };
+
+  // Get result color
+  const getResultColor = (result: string) => {
+    switch (result) {
+      case 'victory': return { bg: 'bg-lime-500', text: 'text-lime-950' };
+      case 'defeat': return { bg: 'bg-red-500', text: 'text-white' };
+      case 'draw': return { bg: 'bg-neutral-500', text: 'text-white' };
+      default: return { bg: 'bg-neutral-500', text: 'text-white' };
+    }
+  };
+
+  // Handle like toggle
+  const handleLike = (postId: string, isUserPost: boolean) => {
+    if (likedPosts.includes(postId)) {
+      setLikedPosts(prev => prev.filter(id => id !== postId));
+      if (isUserPost) unlikePost(postId);
+    } else {
+      setLikedPosts(prev => [...prev, postId]);
+      if (isUserPost) likePost(postId);
+    }
+  };
 
   // Filter tournaments based on selected filters
   const filteredTournaments = useMemo(() => {
@@ -238,6 +288,135 @@ export default function SocialScreen() {
         {/* Feed Tab */}
         {activeTab === 0 && (
           <View className="p-5 gap-4">
+            {/* User Posts from Store */}
+            {userPosts.map((post) => {
+              const resultColors = getResultColor(post.result);
+              const isLiked = likedPosts.includes(post.id);
+              return (
+                <View
+                  key={post.id}
+                  className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
+                >
+                  {/* Photo if available */}
+                  {post.photo && (
+                    <View className="relative">
+                      <Image
+                        source={{ uri: post.photo }}
+                        className="w-full h-48"
+                        resizeMode="cover"
+                      />
+                      {/* Kourt watermark */}
+                      <View className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg flex-row items-center">
+                        <View className="w-4 h-4 bg-lime-500 rounded items-center justify-center mr-1.5">
+                          <Text className="text-[8px] font-black text-black">K</Text>
+                        </View>
+                        <Text className="text-white font-bold text-[10px]">KOURT</Text>
+                      </View>
+                      {/* XP earned badge */}
+                      <View className="absolute top-2 right-2 bg-lime-500 px-2 py-1 rounded-full flex-row items-center">
+                        <MaterialIcons name="bolt" size={12} color="#1A2E05" />
+                        <Text className="text-[10px] font-bold text-lime-950 ml-0.5">+{post.xpEarned} XP</Text>
+                      </View>
+                    </View>
+                  )}
+
+                  <View className="p-4">
+                    {/* Header */}
+                    <View className="flex-row items-center mb-3">
+                      <View className="w-10 h-10 bg-neutral-300 rounded-full items-center justify-center">
+                        {post.user.avatar ? (
+                          <Image source={{ uri: post.user.avatar }} className="w-10 h-10 rounded-full" />
+                        ) : (
+                          <Text className="font-bold text-neutral-600">
+                            {post.user.name.charAt(0)}
+                          </Text>
+                        )}
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text className="font-semibold text-black">
+                          {post.user.name}
+                        </Text>
+                        <Text className="text-xs text-neutral-500">
+                          {post.user.username || ''} {post.user.username ? '• ' : ''}{formatTimeAgo(post.createdAt)}
+                        </Text>
+                      </View>
+                      <Pressable>
+                        <MaterialIcons name="more-horiz" size={20} color="#A3A3A3" />
+                      </Pressable>
+                    </View>
+
+                    {/* Match Result Content */}
+                    <View className={`${post.result === 'victory' ? 'bg-lime-50' : post.result === 'defeat' ? 'bg-red-50' : 'bg-neutral-50'} rounded-xl p-4 mb-3`}>
+                      <View className="flex-row items-center gap-2 mb-2">
+                        <MaterialIcons name="sports-tennis" size={16} color={post.result === 'victory' ? '#84CC16' : post.result === 'defeat' ? '#EF4444' : '#6B7280'} />
+                        <Text className={`text-sm font-medium ${post.result === 'victory' ? 'text-lime-900' : post.result === 'defeat' ? 'text-red-900' : 'text-neutral-700'}`}>
+                          {post.sport}
+                        </Text>
+                        <View className={`px-2 py-0.5 ${resultColors.bg} rounded-full`}>
+                          <Text className={`text-xs font-bold ${resultColors.text}`}>
+                            {getResultLabel(post.result)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text className="text-2xl font-bold text-black">{post.score}</Text>
+                      <Text className="text-sm text-neutral-600 mt-1">{post.venue}</Text>
+                      {post.duration && (
+                        <View className="flex-row items-center gap-1 mt-1">
+                          <MaterialIcons name="timer" size={12} color="#737373" />
+                          <Text className="text-xs text-neutral-500">{post.duration}</Text>
+                        </View>
+                      )}
+                      {/* Display metrics if available */}
+                      {post.metrics && Object.keys(post.metrics).length > 0 && (
+                        <View className="flex-row flex-wrap gap-2 mt-2 pt-2 border-t border-neutral-200">
+                          {Object.entries(post.metrics)
+                            .filter(([_, value]) => value && value !== '0')
+                            .slice(0, 4)
+                            .map(([key, value]) => (
+                              <View key={key} className="bg-white/70 px-2 py-1 rounded">
+                                <Text className="text-[10px] text-neutral-600">
+                                  {key.replace(/_/g, ' ')}: <Text className="font-bold">{value}</Text>
+                                </Text>
+                              </View>
+                            ))}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Description if available */}
+                    {post.description && (
+                      <Text className="text-sm text-neutral-700 mb-3">{post.description}</Text>
+                    )}
+
+                    {/* Actions */}
+                    <View className="flex-row items-center gap-4">
+                      <Pressable
+                        onPress={() => handleLike(post.id, true)}
+                        className="flex-row items-center gap-1.5"
+                      >
+                        <MaterialIcons
+                          name={isLiked ? "favorite" : "favorite-border"}
+                          size={20}
+                          color={isLiked ? "#EF4444" : "#525252"}
+                        />
+                        <Text className="text-sm text-neutral-600">
+                          {post.likes + (isLiked ? 1 : 0)}
+                        </Text>
+                      </Pressable>
+                      <Pressable className="flex-row items-center gap-1.5">
+                        <MaterialIcons name="chat-bubble-outline" size={20} color="#525252" />
+                        <Text className="text-sm text-neutral-600">{post.comments}</Text>
+                      </Pressable>
+                      <Pressable className="flex-row items-center gap-1.5">
+                        <MaterialIcons name="share" size={20} color="#525252" />
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* Mock Feed Posts */}
             {mockFeed.map((post) => (
               <View
                 key={post.id}
@@ -317,14 +496,17 @@ export default function SocialScreen() {
 
                 {/* Actions */}
                 <View className="flex-row items-center gap-4">
-                  <Pressable className="flex-row items-center gap-1.5">
+                  <Pressable
+                    onPress={() => handleLike(post.id, false)}
+                    className="flex-row items-center gap-1.5"
+                  >
                     <MaterialIcons
-                      name="favorite-border"
+                      name={likedPosts.includes(post.id) ? "favorite" : "favorite-border"}
                       size={20}
-                      color="#525252"
+                      color={likedPosts.includes(post.id) ? "#EF4444" : "#525252"}
                     />
                     <Text className="text-sm text-neutral-600">
-                      {post.likes}
+                      {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
                     </Text>
                   </Pressable>
                   <Pressable className="flex-row items-center gap-1.5">

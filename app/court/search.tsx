@@ -88,37 +88,39 @@ export default function CourtSearchScreen() {
       </View>
 
       {/* Sports Filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-4 py-2"
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {sports.map((sport) => (
-          <Pressable
-            key={sport.id}
-            onPress={() => setSelectedSport(sport.id)}
-            className={`flex-row items-center gap-2 px-4 py-2.5 rounded-full ${
-              selectedSport === sport.id
-                ? 'bg-black'
-                : 'bg-neutral-100'
-            }`}
-          >
-            <MaterialIcons
-              name={sport.icon as any}
-              size={16}
-              color={selectedSport === sport.id ? '#fff' : '#525252'}
-            />
-            <Text
-              className={`text-sm font-medium ${
-                selectedSport === sport.id ? 'text-white' : 'text-neutral-700'
+      <View className="px-4 py-2">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexDirection: 'row', gap: 8 }}
+        >
+          {sports.map((sport) => (
+            <Pressable
+              key={sport.id}
+              onPress={() => setSelectedSport(sport.id)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              className={`px-4 py-2.5 rounded-full ${
+                selectedSport === sport.id
+                  ? 'bg-black'
+                  : 'bg-neutral-100'
               }`}
             >
-              {sport.name}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+              <MaterialIcons
+                name={sport.icon as any}
+                size={16}
+                color={selectedSport === sport.id ? '#fff' : '#525252'}
+              />
+              <Text
+                className={`text-sm font-medium ${
+                  selectedSport === sport.id ? 'text-white' : 'text-neutral-700'
+                }`}
+              >
+                {sport.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Filters Row */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-neutral-100">

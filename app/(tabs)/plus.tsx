@@ -20,7 +20,7 @@ const gratuitoItems: MenuItem[] = [
     icon: 'camera-alt',
     title: 'Registrar Partida',
     description: 'Foto, métricas e pontos XP',
-    route: '/match/register',
+    route: '/match/record',
     isPrimary: true,
   },
   {
