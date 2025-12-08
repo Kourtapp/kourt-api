@@ -16,7 +16,8 @@ export function useCourts(filters?: CourtsFilter) {
     try {
       setLoading(true);
       setError(null);
-      const data = await courtsService.getCourts(filtersRef.current);
+      const { limit, ...filters } = filtersRef.current || {};
+      const data = await courtsService.getCourts(filters, limit);
       if (isMounted.current) {
         setCourts(data);
       }

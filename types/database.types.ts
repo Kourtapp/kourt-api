@@ -1,5 +1,30 @@
 // Types gerados a partir do schema Supabase
 
+export interface Arena {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  cover_photo_url: string | null;
+  amenities: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArenaSchedule {
+  id: string;
+  arena_id: string;
+  day_of_week: number | null; // 0-6
+  specific_date: string | null;
+  open_time: string;
+  close_time: string;
+  is_closed: boolean;
+  price_modifier: number;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -35,8 +60,8 @@ export interface Profile {
   phone_verified_at: string | null;
   is_pro: boolean;
 
-  // Subscription
-  subscription: 'free' | 'pro' | null;
+  // Subscription updated
+  // subscription: 'free' | 'pro' | null; (removed duplicate)
 
   // Host
   is_host: boolean;
@@ -44,6 +69,9 @@ export interface Profile {
   // Social
   following_count: number;
   followers_count: number;
+
+  // New features
+  subscription?: 'free' | 'premium' | 'pro' | null;
 
   // Additional
   win_rate: number;
@@ -58,6 +86,7 @@ export interface Profile {
 
 export interface Court {
   id: string;
+  arena_id?: string | null; // Added relation
   name: string;
   type: 'public' | 'private' | 'club';
   sport: string;
@@ -325,6 +354,48 @@ export interface PrivateRankingMember {
   ranking?: PrivateRanking;
 }
 
+export interface Post {
+  id: string;
+  user_id: string;
+  type: 'match_result' | 'achievement' | 'photo' | 'text';
+  content: string | null;
+  photo_url: string | null;
+  match_id: string | null;
+  sport: string | null;
+  result: 'victory' | 'defeat' | 'draw' | null;
+  score: string | null;
+  venue: string | null;
+  duration: string | null;
+  xp_earned: number;
+  metrics: Record<string, string> | null;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  user?: Profile;
+  match?: Match;
+}
+
+export interface PostLike {
+  id: string;
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+
+  // Relations
+  user?: Profile;
+}
+
 // Input types for creating/updating
 export type ProfileUpdate = Partial<
   Omit<Profile, 'id' | 'email' | 'created_at' | 'updated_at'>
@@ -365,6 +436,7 @@ export interface CourtsFilter {
   latitude?: number;
   longitude?: number;
   radius_km?: number;
+  limit?: number;
 }
 
 export interface MatchesFilter {
@@ -373,4 +445,5 @@ export interface MatchesFilter {
   status?: string;
   date?: string;
   is_public?: boolean;
+  limit?: number;
 }

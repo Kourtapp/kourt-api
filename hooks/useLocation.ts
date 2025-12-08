@@ -8,10 +8,19 @@ interface LocationState {
   longitudeDelta: number;
 }
 
+interface AddressInfo {
+  city: string | null;
+  district: string | null;
+  street: string | null;
+  region: string | null;
+}
+
 interface UseLocationReturn {
   location: LocationState | null;
+  address: AddressInfo | null;
   isLoading: boolean;
   error: string | null;
+  hasPermission: boolean;
   requestPermission: () => Promise<boolean>;
   refreshLocation: () => Promise<void>;
 }
@@ -26,15 +35,38 @@ const DEFAULT_LOCATION: LocationState = {
 
 export function useLocation(): UseLocationReturn {
   const [location, setLocation] = useState<LocationState | null>(null);
+  const [address, setAddress] = useState<AddressInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
 
   const requestPermission = async (): Promise<boolean> => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
+      const granted = status === 'granted';
+      setHasPermission(granted);
+      return granted;
     } catch {
+      setHasPermission(false);
       return false;
+    }
+  };
+
+  const getAddressFromCoords = async (latitude: number, longitude: number): Promise<AddressInfo | null> => {
+    try {
+      const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (results && results.length > 0) {
+        const result = results[0];
+        return {
+          city: result.city || result.subregion || null,
+          district: result.district || result.subregion || null,
+          street: result.street || null,
+          region: result.region || null,
+        };
+      }
+      return null;
+    } catch {
+      return null;
     }
   };
 
@@ -44,12 +76,14 @@ export function useLocation(): UseLocationReturn {
 
     try {
       const { status } = await Location.getForegroundPermissionsAsync();
+      setHasPermission(status === 'granted');
 
       if (status !== 'granted') {
         const granted = await requestPermission();
         if (!granted) {
           setError('Permissão de localização negada');
           setLocation(DEFAULT_LOCATION);
+          setAddress({ city: 'São Paulo', district: null, street: null, region: 'SP' });
           setIsLoading(false);
           return;
         }
@@ -59,15 +93,25 @@ export function useLocation(): UseLocationReturn {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      setLocation({
+      const newLocation = {
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
-      });
+      };
+
+      setLocation(newLocation);
+
+      // Get address info via reverse geocoding
+      const addressInfo = await getAddressFromCoords(
+        currentLocation.coords.latitude,
+        currentLocation.coords.longitude
+      );
+      setAddress(addressInfo);
     } catch (err) {
       setError('Erro ao obter localização');
       setLocation(DEFAULT_LOCATION);
+      setAddress({ city: 'São Paulo', district: null, street: null, region: 'SP' });
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +123,10 @@ export function useLocation(): UseLocationReturn {
 
   return {
     location,
+    address,
     isLoading,
     error,
+    hasPermission,
     requestPermission,
     refreshLocation,
   };

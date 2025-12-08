@@ -5,13 +5,17 @@ import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { useAuthStore } from '@/stores/authStore';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import '../global.css';
+
+// Replace with your actual Stripe Test Publishable Key
+// IMPORTANT: Get this from your Stripe Dashboard (Developers > API Keys)
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51PqJ...ReplaceWithYourKey';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isInitialized } = useAuthStore();
   const segments = useSegments();
   const previousUserId = useRef<string | undefined>(undefined);
-  const hasInitialNavigated = useRef(false);
 
   // Use refs to track values without causing re-renders
   const onboardingCompleted = profile?.onboarding_completed;
@@ -26,37 +30,26 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inOnboardingGroup = firstSegment === '(onboarding)';
     const inChatGroup = firstSegment === 'chat';
 
-    // Check if user just logged out (had user before, doesn't have now)
     const justLoggedOut = previousUserId.current && !userId;
-
-    // Check if user just logged in (didn't have user before, has now)
     const justLoggedIn = !previousUserId.current && userId;
-
-    // Update previous user ID
     previousUserId.current = userId;
 
-    // If user is already in onboarding, don't redirect unless they just logged out
     if (inOnboardingGroup && userId && !justLoggedOut) {
-      return; // Let them continue onboarding without interruption
+      return;
     }
 
-    // If user is already in tabs and onboarding is complete, don't redirect
     if (inTabsGroup && userId && onboardingCompleted) {
       return;
     }
 
     if (!userId && (inTabsGroup || inOnboardingGroup || inChatGroup || justLoggedOut)) {
-      // Not authenticated, redirect to welcome
       console.log('[Auth] Redirecting to welcome - user not authenticated');
       router.replace('/');
     } else if (userId && (inAuthGroup || !firstSegment || firstSegment === 'index' || justLoggedIn)) {
-      // Authenticated and in auth/welcome screens, or just logged in
       if (onboardingCompleted) {
-        // Onboarding completed, go to tabs
         console.log('[Auth] Redirecting to tabs - onboarding completed');
         router.replace('/(tabs)');
       } else if (!inOnboardingGroup) {
-        // Onboarding not completed and not already in onboarding
         console.log('[Auth] Redirecting to onboarding - onboarding not completed');
         router.replace('/(onboarding)/welcome');
       }
@@ -81,7 +74,6 @@ export default function RootLayout() {
     initialize();
   }, [initialize]);
 
-  // Request location permission on app start
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.getForegroundPermissionsAsync();
@@ -93,17 +85,26 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" />
-      <AuthGuard>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="chat" />
-        </Stack>
-      </AuthGuard>
-    </GestureHandlerRootView>
+    <StripeProvider
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
+      merchantIdentifier="merchant.com.kourt"
+    >
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="dark" />
+        <AuthGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="chat" />
+            <Stack.Screen name="subscription" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="tournaments" />
+            <Stack.Screen name="booking" />
+            <Stack.Screen name="admin" />
+          </Stack>
+        </AuthGuard>
+      </GestureHandlerRootView>
+    </StripeProvider>
   );
 }

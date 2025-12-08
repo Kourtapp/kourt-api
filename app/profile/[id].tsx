@@ -12,68 +12,18 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
-import { Profile } from '@/types/database.types';
+import { Profile, Match } from '@/types/database.types';
 import { useAuthStore } from '@/stores/authStore';
 
-// Mock data for demonstration
-const mockProfile: Profile = {
-  id: '1',
-  email: 'lucas@email.com',
-  name: 'Lucas Mendes',
-  username: 'lucasmendes',
-  phone: null,
-  cpf: null,
-  birth_date: null,
-  avatar_url: null,
-  bio: 'Jogador de Beach Tennis e Padel. Sempre buscando evoluir!',
-  level: 12,
-  xp: 2450,
-  xp_to_next_level: 3000,
-  total_matches: 89,
-  wins: 52,
-  streak: 5,
-  sports: ['beach-tennis', 'padel'],
-  favorite_sports: ['beach-tennis'],
-  sport_levels: { 'beach-tennis': 'intermediate', padel: 'beginner' },
-  play_frequency: '2-3x',
-  preferred_schedule: ['morning', 'evening'],
-  goals: ['improve', 'social'],
-  onboarding_completed: true,
-  onboarding_completed_at: null,
-  email_verified: true,
-  phone_verified: false,
-  phone_verified_at: null,
-  is_pro: false,
-  subscription: null,
-  is_host: false,
-  following_count: 156,
-  followers_count: 234,
-  win_rate: 58,
-  city: 'São Paulo',
-  neighborhood: 'Pinheiros',
-  auth_provider: 'email',
-  created_at: '2024-01-15',
-  updated_at: '2024-12-01',
+type RecentMatch = {
+  id: string;
+  sport: string;
+  result: 'victory' | 'defeat' | 'draw';
+  opponent: string;
+  score: string;
+  date: string;
 };
 
-const mockMatches = [
-  {
-    id: '1',
-    sport: 'Beach Tennis',
-    result: 'Vitória',
-    score: '6-4, 6-3',
-    date: 'Ontem',
-    opponent: 'Ricardo Santos',
-  },
-  {
-    id: '2',
-    sport: 'Padel',
-    result: 'Derrota',
-    score: '4-6, 3-6',
-    date: '3 dias atrás',
-    opponent: 'Fernanda Oliveira',
-  },
-];
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -81,9 +31,11 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [recentMatches, setRecentMatches] = useState<RecentMatch[]>([]);
 
   useEffect(() => {
     fetchProfile();
+    fetchRecentMatches();
   }, [id]);
 
   const fetchProfile = async () => {
@@ -98,10 +50,39 @@ export default function UserProfileScreen() {
       if (error) throw error;
       setProfile(data);
     } catch (err) {
-      // Use mock data for demonstration
-      setProfile(mockProfile);
+      console.error('Error fetching profile:', err);
+      setProfile(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentMatches = async () => {
+    try {
+      // Fetch matches where this user participated
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`created_by.eq.${id}`)
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      // Transform to RecentMatch format
+      const matches: RecentMatch[] = (data || []).map((m: any) => ({
+        id: m.id,
+        sport: m.sport || 'Beach Tennis',
+        result: m.winner_id === id ? 'victory' : (m.winner_id ? 'defeat' : 'draw'),
+        opponent: 'Adversário',
+        score: m.final_score || '-',
+        date: new Date(m.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
+      }));
+
+      setRecentMatches(matches);
+    } catch (err) {
+      console.error('Error fetching matches:', err);
     }
   };
 
@@ -367,40 +348,52 @@ export default function UserProfileScreen() {
           <Text className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
             Partidas Recentes
           </Text>
-          {mockMatches.map((match) => (
-            <View
-              key={match.id}
-              className="flex-row items-center py-3 border-b border-gray-100"
-            >
-              <View className={`w-10 h-10 rounded-full items-center justify-center ${
-                match.result === 'Vitória' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                <MaterialIcons
-                  name={match.result === 'Vitória' ? 'emoji-events' : 'close'}
-                  size={20}
-                  color={match.result === 'Vitória' ? '#22C55E' : '#EF4444'}
-                />
-              </View>
-              <View className="flex-1 ml-3">
-                <View className="flex-row items-center">
-                  <Text className="font-medium text-gray-900">{match.sport}</Text>
-                  <View className={`ml-2 px-2 py-0.5 rounded ${
-                    match.result === 'Vitória' ? 'bg-green-100' : 'bg-red-100'
+          {recentMatches.length === 0 ? (
+            <View className="py-8 items-center">
+              <MaterialIcons name="sports-tennis" size={32} color="#D1D5DB" />
+              <Text className="text-sm text-gray-400 mt-2">Nenhuma partida registrada</Text>
+            </View>
+          ) : (
+            recentMatches.map((match) => {
+              const isVictory = match.result === 'victory';
+              const isDefeat = match.result === 'defeat';
+              const resultLabel = isVictory ? 'Vitória' : isDefeat ? 'Derrota' : 'Empate';
+              return (
+                <View
+                  key={match.id}
+                  className="flex-row items-center py-3 border-b border-gray-100"
+                >
+                  <View className={`w-10 h-10 rounded-full items-center justify-center ${
+                    isVictory ? 'bg-green-100' : isDefeat ? 'bg-red-100' : 'bg-gray-100'
                   }`}>
-                    <Text className={`text-xs font-medium ${
-                      match.result === 'Vitória' ? 'text-green-700' : 'text-red-700'
-                    }`}>
-                      {match.result}
+                    <MaterialIcons
+                      name={isVictory ? 'emoji-events' : isDefeat ? 'close' : 'remove'}
+                      size={20}
+                      color={isVictory ? '#22C55E' : isDefeat ? '#EF4444' : '#6B7280'}
+                    />
+                  </View>
+                  <View className="flex-1 ml-3">
+                    <View className="flex-row items-center">
+                      <Text className="font-medium text-gray-900">{match.sport}</Text>
+                      <View className={`ml-2 px-2 py-0.5 rounded ${
+                        isVictory ? 'bg-green-100' : isDefeat ? 'bg-red-100' : 'bg-gray-100'
+                      }`}>
+                        <Text className={`text-xs font-medium ${
+                          isVictory ? 'text-green-700' : isDefeat ? 'text-red-700' : 'text-gray-700'
+                        }`}>
+                          {resultLabel}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className="text-sm text-gray-500">
+                      {match.score !== '-' && `${match.score}`}
                     </Text>
                   </View>
+                  <Text className="text-xs text-gray-400">{match.date}</Text>
                 </View>
-                <Text className="text-sm text-gray-500">
-                  vs {match.opponent} • {match.score}
-                </Text>
-              </View>
-              <Text className="text-xs text-gray-400">{match.date}</Text>
-            </View>
-          ))}
+              );
+            })
+          )}
         </View>
 
         {/* Spacer */}

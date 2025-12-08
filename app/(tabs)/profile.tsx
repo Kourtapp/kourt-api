@@ -17,6 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
 import { useAchievements, useUserMatches, useBookings, useCourts } from '@/hooks';
 import { ProfileCheckInModal } from '@/components/modals/ProfileCheckInModal';
+import SejaHostCard from '@/components/SejaHostCard';
+import SejaPremiumCard from '@/components/SejaPremiumCard';
 
 const { width } = Dimensions.get('window');
 
@@ -136,48 +138,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Host Banner - Improved size */}
-        {!profile?.is_host && (
-          <Pressable
-            onPress={() => router.push('/host/register' as any)}
-            className="mx-5 mt-4 rounded-2xl overflow-hidden"
-          >
-            <LinearGradient
-              colors={['#84CC16', '#65A30D', '#4D7C0F']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="p-5"
-            >
-              <View className="flex-row items-center">
-                <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center">
-                  <MaterialIcons name="storefront" size={32} color="#fff" />
-                </View>
-                <View className="flex-1 ml-4">
-                  <Text className="text-xl font-bold text-white">
-                    Seja um Host
-                  </Text>
-                  <Text className="text-base text-white/90 mt-1">
-                    Cadastre sua quadra e receba reservas
-                  </Text>
-                  <View className="flex-row items-center gap-2 mt-2">
-                    <View className="flex-row items-center gap-1 px-2 py-1 bg-white/20 rounded-full">
-                      <MaterialIcons name="check" size={12} color="#fff" />
-                      <Text className="text-xs text-white">Grátis</Text>
-                    </View>
-                    <View className="flex-row items-center gap-1 px-2 py-1 bg-white/20 rounded-full">
-                      <MaterialIcons name="check" size={12} color="#fff" />
-                      <Text className="text-xs text-white">Rápido</Text>
-                    </View>
-                  </View>
-                </View>
-                <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-                  <MaterialIcons name="arrow-forward" size={24} color="#fff" />
-                </View>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        )}
-
         {/* Stats row */}
         <View className="flex-row items-center px-5 py-4 border-b border-neutral-100">
           <Pressable className="items-center mr-6">
@@ -289,6 +249,36 @@ export default function ProfileScreen() {
                 <Text className="text-sm font-bold text-orange-600">15 km</Text>
               </View>
             </View>
+
+            {/* Premium Banner */}
+            {!isPro && (
+              <View className="-mx-5">
+                <SejaPremiumCard />
+              </View>
+            )}
+
+            {/* Host Banner or Dashboard Access */}
+            {profile?.is_host ? (
+              <Pressable
+                onPress={() => router.push('/admin/arena' as any)}
+                className="mb-6 -mx-5 bg-neutral-900 mx-5 p-4 rounded-2xl flex-row items-center justify-between"
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="w-10 h-10 bg-neutral-800 rounded-lg items-center justify-center">
+                    <MaterialIcons name="store" size={20} color="#fff" />
+                  </View>
+                  <View>
+                    <Text className="text-white font-bold">Painel da Arena</Text>
+                    <Text className="text-neutral-400 text-xs">Gerenciar quadras e reservas</Text>
+                  </View>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#fff" />
+              </Pressable>
+            ) : (
+              <View className="mb-6 -mx-5">
+                <SejaHostCard />
+              </View>
+            )}
 
             {/* Activities Menu */}
             <View className="bg-white rounded-2xl border border-neutral-100">

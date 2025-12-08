@@ -51,7 +51,7 @@ interface PhotoItem {
 const COURT_TYPES = [
   {
     type: 'public' as CourtType,
-    icon: 'location-city' as const,
+    icon: 'grid-view' as const,
     title: 'Quadra Pública',
     description: 'Parques, praças, escolas',
     features: [
@@ -65,7 +65,7 @@ const COURT_TYPES = [
   },
   {
     type: 'private' as CourtType,
-    icon: 'home' as const,
+    icon: 'home-work' as const,
     title: 'Quadra Privada',
     description: 'Condomínios, residências',
     features: [
@@ -79,7 +79,7 @@ const COURT_TYPES = [
   },
   {
     type: 'arena' as CourtType,
-    icon: 'stadium' as const,
+    icon: 'business' as const,
     title: 'Arena / Clube',
     description: 'Espaços comerciais',
     features: [
@@ -87,8 +87,8 @@ const COURT_TYPES = [
       'Receba reservas e pagamentos',
       'Aparece no mapa público',
     ],
-    color: '#8B5CF6',
-    bgColor: '#EDE9FE',
+    color: '#F59E0B',
+    bgColor: '#FEF3C7',
     approval: '48h',
   },
 ];
@@ -130,17 +130,27 @@ const OPTIONAL_PHOTOS: { type: PhotoType; title: string }[] = [
 
 const AMENITIES = [
   { id: 'parking', name: 'Estacionamento', icon: 'local-parking' },
-  { id: 'locker_room', name: 'Vestiário', icon: 'checkroom' },
+  { id: 'locker_room', name: 'Vestiario', icon: 'checkroom' },
   { id: 'shower', name: 'Chuveiro', icon: 'shower' },
   { id: 'bathroom', name: 'Banheiro', icon: 'wc' },
   { id: 'water_fountain', name: 'Bebedouro', icon: 'water-drop' },
   { id: 'snack_bar', name: 'Lanchonete', icon: 'restaurant' },
   { id: 'equipment_rental', name: 'Aluguel de Equipamento', icon: 'sports-tennis' },
   { id: 'wifi', name: 'Wi-Fi', icon: 'wifi' },
-  { id: 'security', name: 'Segurança', icon: 'security' },
+  { id: 'security', name: 'Seguranca', icon: 'security' },
   { id: 'accessibility', name: 'Acessibilidade', icon: 'accessible' },
   { id: 'first_aid', name: 'Primeiros Socorros', icon: 'medical-services' },
   { id: 'sound_system', name: 'Som Ambiente', icon: 'volume-up' },
+  { id: 'bleachers', name: 'Arquibancada', icon: 'stairs' },
+  { id: 'lighting', name: 'Iluminacao Noturna', icon: 'lightbulb' },
+  { id: 'covered', name: 'Quadra Coberta', icon: 'roofing' },
+  { id: 'air_conditioning', name: 'Ar Condicionado', icon: 'ac-unit' },
+  { id: 'scoreboard', name: 'Placar Eletronico', icon: 'scoreboard' },
+  { id: 'pro_shop', name: 'Loja / Pro Shop', icon: 'store' },
+  { id: 'instructor', name: 'Professor Disponivel', icon: 'school' },
+  { id: 'kids_area', name: 'Area Kids', icon: 'child-care' },
+  { id: 'vip_lounge', name: 'Area VIP / Lounge', icon: 'weekend' },
+  { id: 'massage', name: 'Massagem', icon: 'spa' },
 ];
 
 // ============ MAIN COMPONENT ============

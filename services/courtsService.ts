@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Court, CourtsFilter, Review } from '@/types/database.types';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const courtsService = {
   // Campos essenciais para listagem (reduz overfetching)
@@ -194,4 +195,57 @@ async function updateCourtRating(courtId: string): Promise<void> {
       })
       .eq('id', courtId);
   }
+}
+
+// ==================== REAL-TIME ====================
+
+// Subscribe to new courts
+export function subscribeToCourts(
+  onInsert: (court: Court) => void,
+  onUpdate?: (court: Court) => void,
+  onDelete?: (courtId: string) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel('courts-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'courts',
+      },
+      (payload) => {
+        onInsert(payload.new as Court);
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'courts',
+      },
+      (payload) => {
+        if (onUpdate) onUpdate(payload.new as Court);
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'courts',
+      },
+      (payload) => {
+        if (onDelete) onDelete(payload.old.id);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+// Unsubscribe from courts channel
+export function unsubscribeFromCourts(channel: RealtimeChannel): void {
+  supabase.removeChannel(channel);
 }

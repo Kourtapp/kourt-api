@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import KourtHostBanner from '@/components/KourtHostBanner';
 
 const menuSections = [
   {
@@ -49,7 +50,7 @@ const menuSections = [
 ];
 
 export default function SettingsScreen() {
-  const { signOut } = useAuthStore();
+  const { signOut, profile } = useAuthStore();
 
   const handleLogout = () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
@@ -75,40 +76,49 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {menuSections.map((section) => (
-          <View key={section.title} className="mt-6">
-            <Text className="text-xs font-semibold text-neutral-400 uppercase tracking-wide px-5 mb-2">
-              {section.title}
-            </Text>
-            <View className="bg-white mx-5 rounded-2xl border border-neutral-200 overflow-hidden">
-              {section.items.map((item, index) => (
-                <Pressable
-                  key={item.label}
-                  onPress={() => router.push(item.route as any)}
-                  className={`flex-row items-center p-4 ${
-                    index < section.items.length - 1
-                      ? 'border-b border-neutral-100'
-                      : ''
-                  }`}
-                >
-                  <View className="w-10 h-10 bg-neutral-100 rounded-xl items-center justify-center">
+        {menuSections.map((section, sectionIndex) => (
+          <View key={section.title}>
+            <View className="mt-6">
+              <Text className="text-xs font-semibold text-neutral-400 uppercase tracking-wide px-5 mb-2">
+                {section.title}
+              </Text>
+              <View className="bg-white mx-5 rounded-2xl border border-neutral-200 overflow-hidden">
+                {section.items.map((item, index) => (
+                  <Pressable
+                    key={item.label}
+                    onPress={() => router.push(item.route as any)}
+                    className={`flex-row items-center p-4 ${
+                      index < section.items.length - 1
+                        ? 'border-b border-neutral-100'
+                        : ''
+                    }`}
+                  >
+                    <View className="w-10 h-10 bg-neutral-100 rounded-xl items-center justify-center">
+                      <MaterialIcons
+                        name={item.icon as any}
+                        size={20}
+                        color="#525252"
+                      />
+                    </View>
+                    <Text className="flex-1 ml-3 text-black font-medium">
+                      {item.label}
+                    </Text>
                     <MaterialIcons
-                      name={item.icon as any}
+                      name="chevron-right"
                       size={20}
-                      color="#525252"
+                      color="#A3A3A3"
                     />
-                  </View>
-                  <Text className="flex-1 ml-3 text-black font-medium">
-                    {item.label}
-                  </Text>
-                  <MaterialIcons
-                    name="chevron-right"
-                    size={20}
-                    color="#A3A3A3"
-                  />
-                </Pressable>
-              ))}
+                  </Pressable>
+                ))}
+              </View>
             </View>
+
+            {/* Kourt Host Banner - After "Preferências" section */}
+            {section.title === 'Preferências' && !profile?.is_host && (
+              <View className="mt-6">
+                <KourtHostBanner />
+              </View>
+            )}
           </View>
         ))}
 

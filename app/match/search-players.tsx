@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,109 +7,56 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { supabase } from '@/lib/supabase';
+import { Profile } from '@/types/database.types';
+import { useAuthStore } from '@/stores/authStore';
 
-interface Player {
-  id: string;
-  name: string;
-  username: string;
-  distance: string;
-  level: string;
-  levelBadge: 'iniciante' | 'intermediario' | 'avancado';
-  rating: number;
-  matches: number;
-  sports: string[];
-  schedule: string;
-  following?: boolean;
-}
-
-const mockPlayers: Player[] = [
-  {
-    id: '1',
-    name: 'Lucas Mendes',
-    username: '@lucasmendes',
-    distance: '2.3 km',
-    level: 'INTERMED.',
-    levelBadge: 'intermediario',
-    rating: 4.8,
-    matches: 89,
-    sports: ['BeachTennis', 'Padel'],
-    schedule: 'Joga manhãs e noites',
-  },
-  {
-    id: '2',
-    name: 'Fernanda Oliveira',
-    username: '@feoliveira',
-    distance: '5.1 km',
-    level: 'AVANÇADO',
-    levelBadge: 'avancado',
-    rating: 4.9,
-    matches: 156,
-    sports: ['BeachTennis'],
-    schedule: 'Joga fins de semana',
-  },
-  {
-    id: '3',
-    name: 'Ricardo Santos',
-    username: '@ricardosantos',
-    distance: '1.8 km',
-    level: 'INTERMED.',
-    levelBadge: 'intermediario',
-    rating: 4.7,
-    matches: 67,
-    sports: ['BeachTennis', 'Tênis'],
-    schedule: 'Joga tardes',
-    following: true,
-  },
-  {
-    id: '4',
-    name: 'Marina Costa',
-    username: '@marinacosta',
-    distance: '3.2 km',
-    level: 'INICIANTE',
-    levelBadge: 'iniciante',
-    rating: 4.5,
-    matches: 23,
-    sports: ['BeachTennis'],
-    schedule: 'Joga noites',
-  },
-  {
-    id: '5',
-    name: 'Carlos Eduardo',
-    username: '@carlosedu',
-    distance: '4.5 km',
-    level: 'AVANÇADO',
-    levelBadge: 'avancado',
-    rating: 4.9,
-    matches: 234,
-    sports: ['BeachTennis', 'Padel', 'Tênis'],
-    schedule: 'Joga todos os dias',
-  },
-];
-
-type LevelFilter = 'all' | 'iniciante' | 'intermediario' | 'avancado';
-type LocationFilter = 'all' | 'nearby';
+type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
 export default function SearchPlayersScreen() {
-  const [searchQuery, setSearchQuery] = useState('beach tennis');
-  const [levelFilter, setLevelFilter] = useState<LevelFilter>('intermediario');
-  const [locationFilter, setLocationFilter] = useState<LocationFilter>('nearby');
-  const [players, setPlayers] = useState<Player[]>(mockPlayers);
+  const { user } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
+  const [players, setPlayers] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('profiles')
+        .select('*')
+        .neq('id', user?.id || '')
+        .order('total_matches', { ascending: false })
+        .limit(50);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (err) {
+      console.error('Error fetching players:', err);
+      setPlayers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPlayers = players.filter((player) => {
-    // Level filter
-    if (levelFilter !== 'all' && player.levelBadge !== levelFilter) {
-      return false;
-    }
-
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const matchesName = player.name.toLowerCase().includes(query);
-      const matchesUsername = player.username.toLowerCase().includes(query);
-      const matchesSport = player.sports.some(s => s.toLowerCase().includes(query));
+      const matchesName = player.name?.toLowerCase().includes(query);
+      const matchesUsername = player.username?.toLowerCase().includes(query);
+      const matchesSport = player.sports?.some(s => s.toLowerCase().includes(query));
       if (!matchesName && !matchesUsername && !matchesSport) {
         return false;
       }
@@ -118,59 +65,55 @@ export default function SearchPlayersScreen() {
     return true;
   });
 
-  const handleFollow = (playerId: string) => {
-    // First show as followed
-    setPlayers(prev => prev.map(p =>
-      p.id === playerId ? { ...p, following: true } : p
-    ));
-
-    // Then remove from list after a short delay
-    setTimeout(() => {
-      setPlayers(prev => prev.filter(p => p.id !== playerId));
-    }, 500);
+  const getLevelBadge = (profile: Profile) => {
+    const sportLevels = profile.sport_levels as Record<string, string> | null;
+    if (!sportLevels) return 'Iniciante';
+    const levels = Object.values(sportLevels);
+    if (levels.includes('advanced') || levels.includes('pro')) return 'Avancado';
+    if (levels.includes('intermediate')) return 'Intermediario';
+    return 'Iniciante';
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case 'iniciante': return 'bg-blue-100 text-blue-700';
-      case 'intermediario': return 'bg-orange-100 text-orange-700';
-      case 'avancado': return 'bg-purple-100 text-purple-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'Avancado':
+        return 'bg-purple-100 text-purple-700';
+      case 'Intermediario':
+        return 'bg-blue-100 text-blue-700';
+      default:
+        return 'bg-green-100 text-green-700';
     }
   };
 
-  const PlayerAvatar = ({ name }: { name: string }) => (
-    <View className="w-12 h-12 rounded-full bg-gray-200 items-center justify-center">
-      <Text className="text-gray-600 font-semibold text-lg">
-        {name.charAt(0).toUpperCase()}
-      </Text>
-    </View>
-  );
+  const handleInvite = (playerId: string) => {
+    router.push({
+      pathname: '/match/create',
+      params: { invitePlayer: playerId }
+    } as any);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-          <MaterialIcons name="arrow-back" size={24} color="#111" />
-        </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-2">
-          Buscar Jogadores
-        </Text>
-      </View>
+      <View className="px-5 py-4 border-b border-neutral-100">
+        <View className="flex-row items-center gap-3 mb-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text className="text-xl font-bold text-black">Buscar Jogadores</Text>
+        </View>
 
-      {/* Search Bar */}
-      <View className="px-4 py-4 border-b border-gray-100">
-        <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
+        {/* Search Input */}
+        <View className="flex-row items-center bg-neutral-100 rounded-xl px-4 py-3">
           <MaterialIcons name="search" size={20} color="#9CA3AF" />
           <TextInput
-            className="flex-1 ml-3 text-base text-gray-900"
-            placeholder="Buscar jogadores..."
-            placeholderTextColor="#9CA3AF"
+            className="flex-1 ml-3 text-base"
+            placeholder="Buscar por nome, esporte..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#9CA3AF"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -178,147 +121,122 @@ export default function SearchPlayersScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </View>
 
-      {/* Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="border-b border-gray-100"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
-      >
-        {/* Sport Filter */}
-        <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${searchQuery.toLowerCase().includes('beach')
-              ? 'bg-[#22C55E]'
-              : 'bg-gray-100'
-            }`}
+        {/* Filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mt-3"
+          contentContainerStyle={{ gap: 8 }}
         >
-          <MaterialIcons
-            name="sports-tennis"
-            size={16}
-            color={searchQuery.toLowerCase().includes('beach') ? '#fff' : '#6B7280'}
-          />
-          <Text
-            className={`ml-1.5 text-sm font-medium ${searchQuery.toLowerCase().includes('beach')
-                ? 'text-white'
-                : 'text-gray-700'
-              }`}
-          >
-            BeachTennis
-          </Text>
-        </TouchableOpacity>
-
-        {/* Level Filter */}
-        <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${levelFilter === 'intermediario' ? 'bg-orange-500' : 'bg-gray-100'
-            }`}
-          onPress={() => setLevelFilter(
-            levelFilter === 'intermediario' ? 'all' : 'intermediario'
-          )}
-        >
-          <Text
-            className={`text-sm font-medium ${levelFilter === 'intermediario' ? 'text-white' : 'text-gray-700'
-              }`}
-          >
-            Intermediário
-          </Text>
-        </TouchableOpacity>
-
-        {/* Location Filter */}
-        <TouchableOpacity
-          className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${locationFilter === 'nearby' ? 'bg-blue-500' : 'bg-gray-100'
-            }`}
-          onPress={() => setLocationFilter(
-            locationFilter === 'nearby' ? 'all' : 'nearby'
-          )}
-        >
-          <MaterialIcons
-            name="near-me"
-            size={16}
-            color={locationFilter === 'nearby' ? '#fff' : '#6B7280'}
-          />
-          <Text
-            className={`ml-1.5 text-sm font-medium ${locationFilter === 'nearby' ? 'text-white' : 'text-gray-700'
-              }`}
-          >
-            Perto de mim
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Results Count */}
-      <View className="px-4 py-3">
-        <Text className="text-sm text-gray-500">
-          {filteredPlayers.length} jogadores encontrados
-        </Text>
-      </View>
-
-      {/* Players List */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 pb-8">
-          {filteredPlayers.map((player) => (
+          {(['all', 'beginner', 'intermediate', 'advanced'] as LevelFilter[]).map((level) => (
             <TouchableOpacity
-              key={player.id}
-              className="flex-row py-4 border-b border-gray-100"
-              onPress={() => router.push(`/profile/${player.id}` as any)}
+              key={level}
+              onPress={() => setLevelFilter(level)}
+              className={`px-4 py-2 rounded-full ${
+                levelFilter === level ? 'bg-black' : 'bg-neutral-100'
+              }`}
             >
-              <PlayerAvatar name={player.name} />
-
-              <View className="flex-1 ml-3">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1">
-                    <Text className="text-base font-semibold text-gray-900">
-                      {player.name}
-                    </Text>
-                    <View className={`ml-2 px-2 py-0.5 rounded ${getLevelColor(player.levelBadge)}`}>
-                      <Text className="text-[10px] font-bold">{player.level}</Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => handleFollow(player.id)}
-                    className={`px-4 py-1.5 rounded-full ${player.following
-                        ? 'bg-gray-200'
-                        : 'bg-[#22C55E]'
-                      }`}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${player.following ? 'text-gray-700' : 'text-white'
-                        }`}
-                    >
-                      {player.following ? 'Seguindo' : 'Seguir'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View className="flex-row items-center mt-0.5">
-                  <Text className="text-sm text-gray-500">{player.username}</Text>
-                  <Text className="text-sm text-gray-300 mx-1">•</Text>
-                  <Text className="text-sm text-gray-500">{player.distance}</Text>
-                </View>
-
-                <View className="flex-row items-center mt-1.5">
-                  <View className="flex-row items-center">
-                    <MaterialIcons name="star" size={14} color="#F59E0B" />
-                    <Text className="ml-0.5 text-sm text-gray-600">{player.rating}</Text>
-                  </View>
-                  <Text className="text-sm text-gray-300 mx-2">•</Text>
-                  <Text className="text-sm text-gray-500">{player.matches} jogos</Text>
-                </View>
-
-                <View className="flex-row items-center mt-1.5">
-                  <MaterialIcons name="sports-tennis" size={14} color="#9CA3AF" />
-                  <Text className="ml-1 text-sm text-gray-500">
-                    {player.sports.join(', ')}
-                  </Text>
-                  <Text className="text-sm text-gray-300 mx-1">•</Text>
-                  <Text className="text-sm text-gray-500">{player.schedule}</Text>
-                </View>
-              </View>
+              <Text
+                className={`text-sm font-medium ${
+                  levelFilter === level ? 'text-white' : 'text-neutral-600'
+                }`}
+              >
+                {level === 'all' ? 'Todos' :
+                 level === 'beginner' ? 'Iniciante' :
+                 level === 'intermediate' ? 'Intermediario' : 'Avancado'}
+              </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
+      </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+        {loading ? (
+          <View className="py-20 items-center">
+            <ActivityIndicator size="large" color="#000" />
+          </View>
+        ) : filteredPlayers.length === 0 ? (
+          <View className="py-20 items-center">
+            <MaterialIcons name="person-search" size={48} color="#9CA3AF" />
+            <Text className="text-lg font-semibold text-neutral-700 mt-4">
+              Nenhum jogador encontrado
+            </Text>
+            <Text className="text-sm text-neutral-500 text-center mt-2">
+              Tente ajustar os filtros ou a busca
+            </Text>
+          </View>
+        ) : (
+          <View className="gap-3">
+            {filteredPlayers.map((player) => {
+              const level = getLevelBadge(player);
+              const levelColors = getLevelColor(level);
+
+              return (
+                <TouchableOpacity
+                  key={player.id}
+                  onPress={() => router.push(`/profile/${player.id}` as any)}
+                  className="bg-white border border-neutral-200 rounded-2xl p-4"
+                >
+                  <View className="flex-row items-start">
+                    {/* Avatar */}
+                    <View className="w-14 h-14 bg-neutral-200 rounded-full items-center justify-center">
+                      <MaterialIcons name="person" size={28} color="#9CA3AF" />
+                    </View>
+
+                    {/* Info */}
+                    <View className="flex-1 ml-3">
+                      <View className="flex-row items-center gap-2">
+                        <Text className="font-semibold text-black">{player.name || 'Jogador'}</Text>
+                        <View className={`px-2 py-0.5 rounded-full ${levelColors.split(' ')[0]}`}>
+                          <Text className={`text-[10px] font-bold ${levelColors.split(' ')[1]}`}>
+                            {level.toUpperCase()}
+                          </Text>
+                        </View>
+                      </View>
+                      {player.username && (
+                        <Text className="text-sm text-neutral-500">@{player.username}</Text>
+                      )}
+                      <View className="flex-row items-center gap-4 mt-2">
+                        <View className="flex-row items-center gap-1">
+                          <MaterialIcons name="sports-tennis" size={14} color="#737373" />
+                          <Text className="text-xs text-neutral-600">
+                            {player.total_matches || 0} partidas
+                          </Text>
+                        </View>
+                        {player.win_rate && (
+                          <View className="flex-row items-center gap-1">
+                            <MaterialIcons name="trending-up" size={14} color="#22C55E" />
+                            <Text className="text-xs text-neutral-600">
+                              {player.win_rate}% vitórias
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      {player.sports && player.sports.length > 0 && (
+                        <View className="flex-row flex-wrap gap-1 mt-2">
+                          {player.sports.slice(0, 3).map((sport) => (
+                            <View key={sport} className="px-2 py-0.5 bg-neutral-100 rounded">
+                              <Text className="text-[10px] text-neutral-600">{sport}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Invite Button */}
+                    <TouchableOpacity
+                      onPress={() => handleInvite(player.id)}
+                      className="px-3 py-2 bg-black rounded-xl"
+                    >
+                      <Text className="text-xs font-semibold text-white">Convidar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

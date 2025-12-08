@@ -5,6 +5,7 @@ import {
   CreateMatchInput,
   MatchesFilter,
 } from '@/types/database.types';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const matchesService = {
   // Campos para listagem de partidas (OTIMIZADO)
@@ -234,3 +235,108 @@ export const matchesService = {
     if (error) throw error;
   },
 };
+
+// ==================== REAL-TIME ====================
+
+// Subscribe to match updates
+export function subscribeToMatches(
+  onInsert: (match: Match) => void,
+  onUpdate?: (match: Match) => void,
+  onDelete?: (matchId: string) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel('matches-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'matches',
+      },
+      async (payload) => {
+        // Fetch the full match with relations
+        const { data } = await supabase
+          .from('matches')
+          .select(`
+            *,
+            organizer:profiles!organizer_id(id, name, avatar_url),
+            court:courts(id, name, city)
+          `)
+          .eq('id', payload.new.id)
+          .single();
+
+        if (data) {
+          onInsert(data as Match);
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'matches',
+      },
+      async (payload) => {
+        if (onUpdate) {
+          // Fetch the full match with relations
+          const { data } = await supabase
+            .from('matches')
+            .select(`
+              *,
+              organizer:profiles!organizer_id(id, name, avatar_url),
+              court:courts(id, name, city)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (data) {
+            onUpdate(data as Match);
+          }
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'matches',
+      },
+      (payload) => {
+        if (onDelete) onDelete(payload.old.id);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+// Subscribe to a specific match updates
+export function subscribeToMatch(
+  matchId: string,
+  onUpdate: (match: Partial<Match>) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`match-${matchId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'matches',
+        filter: `id=eq.${matchId}`,
+      },
+      (payload) => {
+        onUpdate(payload.new as Partial<Match>);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+// Unsubscribe from matches channel
+export function unsubscribeFromMatches(channel: RealtimeChannel): void {
+  supabase.removeChannel(channel);
+}

@@ -43,6 +43,14 @@ const PRICE_FILTERS = [
   { id: 'paid', label: 'Pago' },
 ];
 
+// Court type filters with colors
+const COURT_TYPE_FILTERS = [
+  { id: 'all', label: 'Todos', icon: 'apps', color: '#222222', bgColor: '#F5F5F5' },
+  { id: 'public', label: 'Públicas', icon: 'park', color: '#22C55E', bgColor: '#DCFCE7' },
+  { id: 'private', label: 'Privadas', icon: 'grid-view', color: '#3B82F6', bgColor: '#DBEAFE' },
+  { id: 'arena', label: 'Particulares', icon: 'home', color: '#F59E0B', bgColor: '#FEF3C7' },
+];
+
 // Custom marker component - minimalist
 const CourtMarker = ({
   court,
@@ -272,6 +280,7 @@ export default function MapScreen() {
   // States
   const [selectedSport, setSelectedSport] = useState('all');
   const [selectedPrice, setSelectedPrice] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [showFilters, setShowFilters] = useState(false);
@@ -509,6 +518,42 @@ export default function MapScreen() {
             </Pressable>
           </View>
 
+          {/* Court Type Filters - Colored */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3 -mx-5 px-5"
+          >
+            <View className="flex-row gap-2">
+              {COURT_TYPE_FILTERS.map((filter) => {
+                const isSelected = selectedType === filter.id;
+                return (
+                  <Pressable
+                    key={filter.id}
+                    onPress={() => setSelectedType(filter.id)}
+                    className="flex-row items-center gap-1.5 px-4 py-2.5 rounded-full border"
+                    style={{
+                      backgroundColor: isSelected ? filter.color : '#FFFFFF',
+                      borderColor: isSelected ? filter.color : '#E5E5E5',
+                    }}
+                  >
+                    <MaterialIcons
+                      name={filter.icon as any}
+                      size={16}
+                      color={isSelected ? '#FFFFFF' : filter.color}
+                    />
+                    <Text
+                      className="text-sm font-medium"
+                      style={{ color: isSelected ? '#FFFFFF' : '#525252' }}
+                    >
+                      {filter.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+
           {/* Sport Filters - Minimalist with icons */}
           <ScrollView
             horizontal
@@ -573,11 +618,12 @@ export default function MapScreen() {
             <Text className="text-sm text-neutral-500">
               {filteredCourts.length} quadra{filteredCourts.length !== 1 ? 's' : ''} encontrada{filteredCourts.length !== 1 ? 's' : ''}
             </Text>
-            {(selectedSport !== 'all' || selectedPrice !== 'all') && (
+            {(selectedSport !== 'all' || selectedPrice !== 'all' || selectedType !== 'all') && (
               <Pressable
                 onPress={() => {
                   setSelectedSport('all');
                   setSelectedPrice('all');
+                  setSelectedType('all');
                 }}
                 className="flex-row items-center gap-1"
               >

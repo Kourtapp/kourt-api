@@ -19,6 +19,16 @@ const sports = [
   { id: 'padel', name: 'Padel', icon: 'sports-tennis' },
   { id: 'tennis', name: 'Tênis', icon: 'sports-tennis' },
   { id: 'futevolei', name: 'Futevôlei', icon: 'sports-volleyball' },
+  { id: 'volleyball', name: 'Vôlei', icon: 'sports-volleyball' },
+  { id: 'basketball', name: 'Basquete', icon: 'sports-basketball' },
+  { id: 'football', name: 'Futebol', icon: 'sports-soccer' },
+];
+
+const courtTypes = [
+  { id: 'all', name: 'Todos', icon: 'apps' },
+  { id: 'public', name: 'Pública', icon: 'public' },
+  { id: 'private', name: 'Privada', icon: 'lock' },
+  { id: 'arena', name: 'Arena', icon: 'business' },
 ];
 
 const sortOptions = [
@@ -30,23 +40,41 @@ const sortOptions = [
 export default function CourtSearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [selectedSort, setSelectedSort] = useState('distance');
   const [showOnlyFree, setShowOnlyFree] = useState(false);
 
-  const { courts, loading } = useCourts(
-    selectedSport !== 'all' ? { sport: selectedSport } : undefined
-  );
+  const { courts, loading } = useCourts();
 
   const filteredCourts = courts.filter((court) => {
+    // Filtro de busca por texto
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return (
+      const matchesSearch =
         court.name.toLowerCase().includes(query) ||
         court.city?.toLowerCase().includes(query) ||
-        court.neighborhood?.toLowerCase().includes(query)
-      );
+        court.neighborhood?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
     }
+
+    // Filtro por esporte
+    if (selectedSport !== 'all') {
+      if (court.sport?.toLowerCase() !== selectedSport.toLowerCase() &&
+          !court.sports?.some((s: string) => s.toLowerCase() === selectedSport.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // Filtro por tipo de quadra
+    if (selectedType !== 'all') {
+      if (court.type?.toLowerCase() !== selectedType.toLowerCase()) {
+        return false;
+      }
+    }
+
+    // Filtro gratuitas
     if (showOnlyFree && !court.is_free) return false;
+
     return true;
   });
 
@@ -87,8 +115,45 @@ export default function CourtSearchScreen() {
         </View>
       </View>
 
+      {/* Type Filter */}
+      <View className="px-4 pt-2 pb-1">
+        <Text className="text-xs font-semibold text-neutral-400 uppercase mb-2">Tipo de Quadra</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexDirection: 'row', gap: 8 }}
+        >
+          {courtTypes.map((type) => (
+            <Pressable
+              key={type.id}
+              onPress={() => setSelectedType(type.id)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              className={`px-4 py-2 rounded-full ${
+                selectedType === type.id
+                  ? 'bg-lime-500'
+                  : 'bg-neutral-100'
+              }`}
+            >
+              <MaterialIcons
+                name={type.icon as any}
+                size={16}
+                color={selectedType === type.id ? '#1a2e05' : '#525252'}
+              />
+              <Text
+                className={`text-sm font-medium ${
+                  selectedType === type.id ? 'text-lime-950' : 'text-neutral-700'
+                }`}
+              >
+                {type.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* Sports Filter */}
-      <View className="px-4 py-2">
+      <View className="px-4 pt-1 pb-2">
+        <Text className="text-xs font-semibold text-neutral-400 uppercase mb-2">Esporte</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -99,7 +164,7 @@ export default function CourtSearchScreen() {
               key={sport.id}
               onPress={() => setSelectedSport(sport.id)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-              className={`px-4 py-2.5 rounded-full ${
+              className={`px-4 py-2 rounded-full ${
                 selectedSport === sport.id
                   ? 'bg-black'
                   : 'bg-neutral-100'

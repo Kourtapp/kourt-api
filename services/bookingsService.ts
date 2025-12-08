@@ -7,7 +7,47 @@ export const bookingsService = {
     input: CreateBookingInput,
     userId: string,
   ): Promise<Booking> {
-    // Verificar disponibilidade
+    // 1. Obter informações da quadra e da arena
+    const { data: court } = await supabase
+      .from('courts')
+      .select('arena_id')
+      .eq('id', input.court_id)
+      .single();
+
+    if (court?.arena_id) {
+      // 2. Verificar horário da Arena
+      const date = new Date(input.date);
+      const dayOfWeek = date.getDay(); // 0 (Sun) - 6 (Sat)
+
+      // Busca agendamento específico para a data ou recorrente para o dia da semana
+      const { data: schedule } = await supabase
+        .from('arena_schedules')
+        .select('*')
+        .eq('arena_id', court.arena_id)
+        .or(`specific_date.eq.${input.date},day_of_week.eq.${dayOfWeek}`)
+        .order('specific_date', { ascending: false }) // Prioriza data específica se houver
+        .limit(1)
+        .single();
+
+      // Se houver regra de horário configurada
+      if (schedule) {
+        if (schedule.is_closed) {
+          throw new Error('A arena está fechada neste dia.');
+        }
+
+        const bookingStart = input.start_time; // HH:MM:00
+        const bookingEnd = input.end_time;
+
+        const openTime = schedule.open_time;
+        const closeTime = schedule.close_time;
+
+        if (bookingStart < openTime || bookingEnd > closeTime) {
+          throw new Error(`Horário indisponível. A arena funciona das ${openTime.slice(0, 5)} às ${closeTime.slice(0, 5)}.`);
+        }
+      }
+    }
+
+    // 3. Verificar conflitos de reservas existentes
     const { data: existing } = await supabase
       .from('bookings')
       .select('id')
@@ -17,7 +57,7 @@ export const bookingsService = {
       .or(`start_time.lt.${input.end_time},end_time.gt.${input.start_time}`);
 
     if (existing && existing.length > 0) {
-      throw new Error('Horário não disponível');
+      throw new Error('Horário já reservado por outro jogador.');
     }
 
     const { data, error } = await supabase
@@ -126,7 +166,36 @@ export const bookingsService = {
 
   // Buscar horários disponíveis para uma quadra em uma data
   async getAvailableSlots(courtId: string, date: string): Promise<string[]> {
-    // Buscar reservas existentes
+    // 1. Buscar informações da quadra/arena
+    const { data: court } = await supabase.from('courts').select('arena_id').eq('id', courtId).single();
+
+    let openTime = 6;
+    let closeTime = 23;
+    let isClosed = false;
+
+    if (court?.arena_id) {
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.getDay();
+
+      const { data: schedule } = await supabase
+        .from('arena_schedules')
+        .select('*')
+        .eq('arena_id', court.arena_id)
+        .or(`specific_date.eq.${date},day_of_week.eq.${dayOfWeek}`)
+        .order('specific_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (schedule) {
+        if (schedule.is_closed) isClosed = true;
+        openTime = parseInt(schedule.open_time.split(':')[0]);
+        closeTime = parseInt(schedule.close_time.split(':')[0]);
+      }
+    }
+
+    if (isClosed) return [];
+
+    // 2. Buscar reservas existentes
     const { data: bookings } = await supabase
       .from('bookings')
       .select('start_time, end_time')
@@ -134,17 +203,17 @@ export const bookingsService = {
       .eq('date', date)
       .neq('status', 'cancelled');
 
-    // Gerar todos os slots possíveis (6h às 23h)
+    // 3. Gerar slots possíveis baseado no horário de funcionamento
     const allSlots: string[] = [];
-    for (let hour = 6; hour < 23; hour++) {
+    for (let hour = openTime; hour < closeTime; hour++) {
       allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
     }
 
-    // Filtrar slots ocupados
+    // 4. Filtrar slots ocupados
     const bookedSlots = new Set<string>();
     bookings?.forEach((booking) => {
       const start = parseInt(booking.start_time.split(':')[0]);
-      const end = parseInt(booking.end_time.split(':')[0]);
+      const end = parseInt(booking.end_time.split(':')[0]); // Assumindo hora cheia para MVP
       for (let h = start; h < end; h++) {
         bookedSlots.add(`${h.toString().padStart(2, '0')}:00`);
       }

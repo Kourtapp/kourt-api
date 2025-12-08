@@ -56,25 +56,48 @@ const pricing = {
 };
 
 export default function SubscriptionScreen() {
-  const { profile } = useAuthStore();
+  const { isPremium, isPro, tier } = usePremium();
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('plus');
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('yearly');
-  const [loading, setLoading] = useState(false);
 
-  const isPro = profile?.subscription === 'pro';
-  const isPlus = profile?.subscription === 'plus';
-  const isPremium = isPro || isPlus;
+  import { paymentService } from '@/services/paymentService';
+
+  // ... (inside component)
+
+  const [loading, setLoading] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('yearly');
 
   const handleSubscribe = async () => {
-    setLoading(true);
-    setTimeout(() => {
+    try {
+      setLoading(true);
+
+      // Obter preço correto
+      const price = pricing[selectedPlan][billingPeriod].price;
+
+      // 1. Inicializar Payment Sheet
+      const initialized = await paymentService.initializePaymentSheet(price);
+      if (!initialized) {
+        setLoading(false);
+        return;
+      }
+
+      // 2. Abrir Sheet
+      const { success, error } = await paymentService.openPaymentSheet();
+
+      if (success) {
+        Alert.alert('Sucesso! 🎉', 'Sua assinatura foi ativada. Bem-vindo ao Kourt Premium!');
+        // Idealmente: Refetch profile ou aguardar webhook
+      } else {
+        if (error) {
+          Alert.alert('Erro no pagamento', error);
+        }
+        // Se foi cancelado, não faz nada
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Erro', 'Ocorreu um erro inesperado.');
+    } finally {
       setLoading(false);
-      Alert.alert(
-        `Assinatura ${selectedPlan.toUpperCase()}`,
-        'Funcionalidade de pagamento será integrada em breve!',
-        [{ text: 'OK' }]
-      );
-    }, 1500);
+    }
   };
 
   // Theme colors based on selected plan
@@ -149,22 +172,19 @@ export default function SubscriptionScreen() {
       <View className="flex-row gap-2 px-6 mb-6">
         <Pressable
           onPress={() => setSelectedPlan('plus')}
-          className={`flex-1 py-3 px-4 rounded-xl border-2 items-center ${
-            selectedPlan === 'plus'
-              ? 'border-gray-900 bg-gray-900'
-              : isPlanPro
-                ? 'border-gray-700 bg-[#1a1a1a]'
-                : 'border-gray-200 bg-white'
-          }`}
+          className={`flex-1 py-3 px-4 rounded-xl border-2 items-center ${selectedPlan === 'plus'
+            ? 'border-gray-900 bg-gray-900'
+            : isPlanPro
+              ? 'border-gray-700 bg-[#1a1a1a]'
+              : 'border-gray-200 bg-white'
+            }`}
         >
-          <Text className={`text-xs font-semibold uppercase tracking-wide ${
-            selectedPlan === 'plus' ? 'text-white' : textMutedColor
-          }`}>
+          <Text className={`text-xs font-semibold uppercase tracking-wide ${selectedPlan === 'plus' ? 'text-white' : textMutedColor
+            }`}>
             Plus
           </Text>
-          <Text className={`text-[11px] mt-0.5 ${
-            selectedPlan === 'plus' ? 'text-gray-400' : isPlanPro ? 'text-gray-600' : 'text-gray-400'
-          }`}>
+          <Text className={`text-[11px] mt-0.5 ${selectedPlan === 'plus' ? 'text-gray-400' : isPlanPro ? 'text-gray-600' : 'text-gray-400'
+            }`}>
             R$ 14,90/mês
           </Text>
         </Pressable>
@@ -175,13 +195,12 @@ export default function SubscriptionScreen() {
             borderWidth: 2,
             borderColor: '#d4af37',
           } : undefined}
-          className={`flex-1 py-3 px-4 rounded-xl items-center ${
-            selectedPlan === 'pro'
-              ? 'bg-gradient-to-r'
-              : isPlanPro
-                ? 'border-2 border-gray-700 bg-[#1a1a1a]'
-                : 'border-2 border-gray-200 bg-white'
-          }`}
+          className={`flex-1 py-3 px-4 rounded-xl items-center ${selectedPlan === 'pro'
+            ? 'bg-gradient-to-r'
+            : isPlanPro
+              ? 'border-2 border-gray-700 bg-[#1a1a1a]'
+              : 'border-2 border-gray-200 bg-white'
+            }`}
         >
           {selectedPlan === 'pro' ? (
             <LinearGradient
@@ -192,14 +211,12 @@ export default function SubscriptionScreen() {
               style={{ borderRadius: 12 }}
             />
           ) : null}
-          <Text className={`text-xs font-semibold uppercase tracking-wide ${
-            selectedPlan === 'pro' ? 'text-[#0a0a0a]' : textMutedColor
-          }`}>
+          <Text className={`text-xs font-semibold uppercase tracking-wide ${selectedPlan === 'pro' ? 'text-[#0a0a0a]' : textMutedColor
+            }`}>
             Pro
           </Text>
-          <Text className={`text-[11px] mt-0.5 ${
-            selectedPlan === 'pro' ? 'text-[#333]' : isPlanPro ? 'text-gray-600' : 'text-gray-400'
-          }`}>
+          <Text className={`text-[11px] mt-0.5 ${selectedPlan === 'pro' ? 'text-[#333]' : isPlanPro ? 'text-gray-600' : 'text-gray-400'
+            }`}>
             R$ 49,90/mês
           </Text>
         </Pressable>
@@ -208,9 +225,8 @@ export default function SubscriptionScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-6">
           {/* Illustration Box */}
-          <View className={`rounded-2xl p-8 mb-8 border-2 border-dashed relative overflow-hidden ${
-            isPlanPro ? 'border-gray-700 bg-[#111]' : 'border-gray-200 bg-gray-50'
-          }`}>
+          <View className={`rounded-2xl p-8 mb-8 border-2 border-dashed relative overflow-hidden ${isPlanPro ? 'border-gray-700 bg-[#111]' : 'border-gray-200 bg-gray-50'
+            }`}>
             {/* Decorative elements */}
             <View className={`absolute top-5 right-7 w-10 h-10 rounded-lg ${isPlanPro ? 'bg-[#d4af37]' : 'bg-gray-900'}`} />
             <View className={`absolute bottom-7 left-7 w-6 h-6 rounded-full ${isPlanPro ? 'bg-[#f4e4a6]' : 'bg-lime-500'}`} />
@@ -254,9 +270,8 @@ export default function SubscriptionScreen() {
             {features.map((feature, index) => (
               <View
                 key={index}
-                className={`flex-row items-center py-3 border-b ${
-                  isPlanPro ? 'border-gray-800' : 'border-gray-100'
-                }`}
+                className={`flex-row items-center py-3 border-b ${isPlanPro ? 'border-gray-800' : 'border-gray-100'
+                  }`}
               >
                 {isPlanPro ? (
                   <LinearGradient
@@ -274,12 +289,10 @@ export default function SubscriptionScreen() {
                   {feature.text}
                 </Text>
                 {feature.badge === 'new' && (
-                  <View className={`px-2 py-0.5 rounded-full ${
-                    isPlanPro ? 'bg-[#d4af37]/20' : 'bg-green-100'
-                  }`}>
-                    <Text className={`text-[10px] font-semibold uppercase ${
-                      isPlanPro ? 'text-[#d4af37]' : 'text-green-700'
+                  <View className={`px-2 py-0.5 rounded-full ${isPlanPro ? 'bg-[#d4af37]/20' : 'bg-green-100'
                     }`}>
+                    <Text className={`text-[10px] font-semibold uppercase ${isPlanPro ? 'text-[#d4af37]' : 'text-green-700'
+                      }`}>
                       Novo
                     </Text>
                   </View>
@@ -293,15 +306,14 @@ export default function SubscriptionScreen() {
             {/* Yearly */}
             <Pressable
               onPress={() => setBillingPeriod('yearly')}
-              className={`flex-1 p-4 rounded-2xl border-2 relative ${
-                billingPeriod === 'yearly'
-                  ? isPlanPro
-                    ? 'border-[#d4af37] bg-[#1a1a1a]'
-                    : 'border-gray-900 bg-gray-50'
-                  : isPlanPro
-                    ? 'border-gray-700 bg-[#111]'
-                    : 'border-gray-200 bg-white'
-              }`}
+              className={`flex-1 p-4 rounded-2xl border-2 relative ${billingPeriod === 'yearly'
+                ? isPlanPro
+                  ? 'border-[#d4af37] bg-[#1a1a1a]'
+                  : 'border-gray-900 bg-gray-50'
+                : isPlanPro
+                  ? 'border-gray-700 bg-[#111]'
+                  : 'border-gray-200 bg-white'
+                }`}
             >
               {/* Savings Badge */}
               <View
@@ -317,15 +329,14 @@ export default function SubscriptionScreen() {
               </View>
 
               {/* Radio */}
-              <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${
-                billingPeriod === 'yearly'
-                  ? isPlanPro
-                    ? 'border-[#d4af37] bg-[#d4af37]'
-                    : 'border-gray-900 bg-gray-900'
-                  : isPlanPro
-                    ? 'border-gray-600'
-                    : 'border-gray-300'
-              }`}>
+              <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${billingPeriod === 'yearly'
+                ? isPlanPro
+                  ? 'border-[#d4af37] bg-[#d4af37]'
+                  : 'border-gray-900 bg-gray-900'
+                : isPlanPro
+                  ? 'border-gray-600'
+                  : 'border-gray-300'
+                }`}>
                 {billingPeriod === 'yearly' && (
                   <View className={`w-2 h-2 rounded-full ${isPlanPro ? 'bg-[#0a0a0a]' : 'bg-white'}`} />
                 )}
@@ -346,26 +357,24 @@ export default function SubscriptionScreen() {
             {/* Monthly */}
             <Pressable
               onPress={() => setBillingPeriod('monthly')}
-              className={`flex-1 p-4 rounded-2xl border-2 relative ${
-                billingPeriod === 'monthly'
-                  ? isPlanPro
-                    ? 'border-[#d4af37] bg-[#1a1a1a]'
-                    : 'border-gray-900 bg-gray-50'
-                  : isPlanPro
-                    ? 'border-gray-700 bg-[#111]'
-                    : 'border-gray-200 bg-white'
-              }`}
+              className={`flex-1 p-4 rounded-2xl border-2 relative ${billingPeriod === 'monthly'
+                ? isPlanPro
+                  ? 'border-[#d4af37] bg-[#1a1a1a]'
+                  : 'border-gray-900 bg-gray-50'
+                : isPlanPro
+                  ? 'border-gray-700 bg-[#111]'
+                  : 'border-gray-200 bg-white'
+                }`}
             >
               {/* Radio */}
-              <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${
-                billingPeriod === 'monthly'
-                  ? isPlanPro
-                    ? 'border-[#d4af37] bg-[#d4af37]'
-                    : 'border-gray-900 bg-gray-900'
-                  : isPlanPro
-                    ? 'border-gray-600'
-                    : 'border-gray-300'
-              }`}>
+              <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${billingPeriod === 'monthly'
+                ? isPlanPro
+                  ? 'border-[#d4af37] bg-[#d4af37]'
+                  : 'border-gray-900 bg-gray-900'
+                : isPlanPro
+                  ? 'border-gray-600'
+                  : 'border-gray-300'
+                }`}>
                 {billingPeriod === 'monthly' && (
                   <View className={`w-2 h-2 rounded-full ${isPlanPro ? 'bg-[#0a0a0a]' : 'bg-white'}`} />
                 )}

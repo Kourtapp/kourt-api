@@ -21,7 +21,8 @@ export function useMatches(filters?: MatchesFilter) {
     try {
       setLoading(true);
       setError(null);
-      const data = await matchesService.getMatches(filtersRef.current);
+      const { limit, ...filters } = filtersRef.current || {};
+      const data = await matchesService.getMatches(filters, limit);
       if (isMounted.current) {
         setMatches(data);
       }
