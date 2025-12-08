@@ -97,7 +97,7 @@ export default function ArenaDashboardScreen() {
                     </Text>
                     <Pressable
                         className="w-full bg-black py-4 rounded-xl items-center"
-                        onPress={() => router.push('/admin/arena/create')}
+                        onPress={() => router.push('/admin/arena/create' as any)}
                     >
                         <Text className="text-white font-bold text-lg">Criar Arena</Text>
                     </Pressable>

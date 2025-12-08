@@ -59,8 +59,7 @@ export default function CourtSearchScreen() {
 
     // Filtro por esporte
     if (selectedSport !== 'all') {
-      if (court.sport?.toLowerCase() !== selectedSport.toLowerCase() &&
-          !court.sports?.some((s: string) => s.toLowerCase() === selectedSport.toLowerCase())) {
+      if (court.sport?.toLowerCase() !== selectedSport.toLowerCase()) {
         return false;
       }
     }

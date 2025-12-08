@@ -37,6 +37,8 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'partidas' | 'estatisticas'>('partidas');
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
 
+  const isPro = profile?.subscription === 'pro' || profile?.subscription === 'premium';
+
 
   const handleLogout = async () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [

@@ -33,7 +33,7 @@ export default function SocialScreen() {
 
     setJoiningMatchId(matchId);
     try {
-      await joinMatch(matchId);
+      await joinMatch(matchId, profile.id);
       Alert.alert('Sucesso!', 'Você entrou na partida!', [
         { text: 'Ver partida', onPress: () => router.push(`/match/${matchId}` as any) },
         { text: 'OK' }
