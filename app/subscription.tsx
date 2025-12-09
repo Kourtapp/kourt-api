@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
+import { paymentService } from '@/services/paymentService';
 
 type PlanTier = 'plus' | 'pro';
 type BillingPeriod = 'monthly' | 'yearly';
@@ -56,12 +57,10 @@ const pricing = {
 };
 
 export default function SubscriptionScreen() {
-  const { isPremium, isPro, tier } = usePremium();
+  // TODO: Implement usePremium hook to check user subscription status
+  const isPremium = false;
+  const isPro = false;
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('plus');
-
-  import { paymentService } from '@/services/paymentService';
-
-  // ... (inside component)
 
   const [loading, setLoading] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('yearly');
