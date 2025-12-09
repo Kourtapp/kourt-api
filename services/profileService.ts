@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import {
   Profile,
   ProfileUpdate,
@@ -314,4 +315,34 @@ async function checkAchievements(userId: string): Promise<void> {
       }
     }
   }
+}
+
+
+// ==================== REAL-TIME ====================
+
+export function subscribeToProfile(
+  userId: string,
+  onUpdate: (profile: Profile) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`profile-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${userId}`,
+      },
+      (payload) => {
+        onUpdate(payload.new as Profile);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+export function unsubscribeFromProfile(channel: RealtimeChannel): void {
+  supabase.removeChannel(channel);
 }

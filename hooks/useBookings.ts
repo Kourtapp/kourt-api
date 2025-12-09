@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { bookingsService } from '@/services/bookingsService';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { bookingsService, subscribeToBookings, unsubscribeFromBookings } from '@/services/bookingsService';
 import { Booking, CreateBookingInput } from '@/types/database.types';
 
-export function useBookings(userId: string | undefined, status?: string) {
+export function useBookings(userId: string | undefined, status?: string, enableRealtime = true) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
   const fetchBookings = useCallback(async () => {
     if (!userId) {
@@ -18,17 +19,52 @@ export function useBookings(userId: string | undefined, status?: string) {
       setLoading(true);
       setError(null);
       const data = await bookingsService.getUserBookings(userId, status);
-      setBookings(data);
+      if (isMounted.current) setBookings(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar reservas');
+      if (isMounted.current) setError(err.message || 'Erro ao carregar reservas');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }, [userId, status]);
 
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime || !userId) return;
+
+    const channel = subscribeToBookings(
+      userId,
+      (newBooking) => {
+        if (isMounted.current) {
+          setBookings((prev) => [newBooking, ...prev]);
+        }
+      },
+      (updatedBooking) => {
+        if (isMounted.current) {
+          setBookings((prev) =>
+            prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
+          );
+        }
+      },
+      (deletedId) => {
+        if (isMounted.current) {
+          setBookings((prev) => prev.filter((b) => b.id !== deletedId));
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFromBookings(channel);
+    };
+  }, [enableRealtime, userId]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   return { bookings, loading, error, refetch: fetchBookings };
 }

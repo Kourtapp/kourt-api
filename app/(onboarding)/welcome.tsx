@@ -55,7 +55,7 @@ export default function WelcomeScreen() {
       <View className="px-5 pb-8">
         <Pressable
           onPress={() => router.push('/sports')}
-          className="w-full py-4 bg-[#1a2634] rounded-2xl flex-row items-center justify-center gap-2"
+          className="w-full py-4 bg-black rounded-full flex-row items-center justify-center gap-2"
         >
           <Text className="text-white font-semibold text-[15px]">Começar</Text>
           <MaterialIcons name="arrow-forward" size={20} color="#FFF" />

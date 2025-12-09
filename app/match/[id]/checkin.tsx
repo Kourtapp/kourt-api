@@ -259,7 +259,8 @@ export default function CheckinScreen() {
           <Pressable
             onPress={handleCheckin}
             disabled={verifyingLocation}
-            className="bg-[#1a2634] py-4 rounded-2xl flex-row items-center justify-center"
+            className="bg-black py-4 rounded-full flex-row items-center justify-center shadow-lg"
+            style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 }}
           >
             {verifyingLocation ? (
               <ActivityIndicator color="#fff" />
@@ -275,7 +276,8 @@ export default function CheckinScreen() {
         ) : allPlayersReady ? (
           <Pressable
             onPress={handleStartMatch}
-            className="bg-[#1a2634] py-4 rounded-2xl flex-row items-center justify-center"
+            className="bg-black py-4 rounded-full flex-row items-center justify-center shadow-lg"
+            style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 }}
           >
             <MaterialIcons name="play-arrow" size={24} color="#fff" />
             <Text className="text-white font-semibold text-base ml-2">
@@ -283,7 +285,7 @@ export default function CheckinScreen() {
             </Text>
           </Pressable>
         ) : (
-          <View className="py-4 bg-neutral-100 rounded-2xl items-center">
+          <View className="py-4 bg-neutral-100 rounded-full items-center">
             <Text className="text-neutral-500 font-medium">
               Aguardando {players.length - checkedInCount} jogador{players.length - checkedInCount > 1 ? 'es' : ''}...
             </Text>

@@ -140,8 +140,8 @@ export default function FrequencyScreen() {
         <Pressable
           onPress={handleContinue}
           disabled={!selected}
-          className={`w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
-            selected ? 'bg-[#1a2634]' : 'bg-neutral-300'
+          className={`w-full py-4 rounded-full flex-row items-center justify-center gap-2 ${
+            selected ? 'bg-black' : 'bg-neutral-300'
           }`}
         >
           <Text className="text-white font-semibold text-[15px]">

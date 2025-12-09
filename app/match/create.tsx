@@ -413,8 +413,8 @@ export default function CreateMatchScreen() {
         <Pressable
           onPress={handleCreate}
           disabled={loading}
-          className={`py-4 rounded-2xl flex-row items-center justify-center ${
-            loading ? 'bg-neutral-300' : 'bg-[#1a2634]'
+          className={`py-4 rounded-full flex-row items-center justify-center ${
+            loading ? 'bg-neutral-300' : 'bg-black'
           }`}
         >
           <MaterialIcons

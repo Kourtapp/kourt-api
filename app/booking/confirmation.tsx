@@ -109,7 +109,7 @@ export default function ConfirmationScreen() {
         <View className="w-full gap-3">
           <Pressable
             onPress={() => router.push({ pathname: '/match/create', params: { bookingId } } as any)}
-            className="w-full py-4 bg-[#1a2634] rounded-2xl flex-row items-center justify-center gap-2"
+            className="w-full py-4 bg-black rounded-full flex-row items-center justify-center gap-2"
           >
             <MaterialIcons name="group-add" size={20} color="#FFF" />
             <Text className="text-white font-semibold">Criar Partida</Text>
@@ -117,9 +117,9 @@ export default function ConfirmationScreen() {
 
           <Pressable
             onPress={handleGoHome}
-            className="w-full py-4 bg-neutral-100 rounded-2xl flex-row items-center justify-center"
+            className="w-full py-4 bg-neutral-100 rounded-full flex-row items-center justify-center"
           >
-            <Text className="text-[#1a2634] font-semibold">Voltar ao Início</Text>
+            <Text className="text-black font-semibold">Voltar ao Início</Text>
           </Pressable>
         </View>
       </View>

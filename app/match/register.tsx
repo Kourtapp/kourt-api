@@ -757,7 +757,7 @@ export default function RegisterMatchScreen() {
         <TouchableOpacity
           onPress={handleRegister}
           disabled={isLoading}
-          className={`rounded-2xl py-4 items-center flex-row justify-center ${isLoading ? 'bg-neutral-300' : 'bg-[#1a2634]'}`}
+          className={`rounded-full py-4 items-center flex-row justify-center ${isLoading ? 'bg-neutral-300' : 'bg-black'}`}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />

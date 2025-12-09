@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface Follow {
   id: string;
@@ -130,3 +131,91 @@ export const followService = {
     }
   },
 };
+
+// ==================== REAL-TIME ====================
+
+export function subscribeToFollowers(
+  userId: string,
+  onInsert: (follow: any) => void,
+  onDelete?: (followId: string) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`followers-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'follows',
+        filter: `following_id=eq.${userId}`,
+      },
+      async (payload) => {
+        const { data } = await supabase
+          .from('follows')
+          .select(`id, follower:profiles!follower_id(id, name, username, avatar_url, level)`)
+          .eq('id', payload.new.id)
+          .single();
+        if (data) onInsert({ id: data.id, profile: (data as any).follower });
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'follows',
+        filter: `following_id=eq.${userId}`,
+      },
+      (payload) => {
+        if (onDelete) onDelete(payload.old.id);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+export function subscribeToFollowing(
+  userId: string,
+  onInsert: (follow: any) => void,
+  onDelete?: (followId: string) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`following-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'follows',
+        filter: `follower_id=eq.${userId}`,
+      },
+      async (payload) => {
+        const { data } = await supabase
+          .from('follows')
+          .select(`id, following:profiles!following_id(id, name, username, avatar_url, level)`)
+          .eq('id', payload.new.id)
+          .single();
+        if (data) onInsert({ id: data.id, profile: (data as any).following });
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'follows',
+        filter: `follower_id=eq.${userId}`,
+      },
+      (payload) => {
+        if (onDelete) onDelete(payload.old.id);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+export function unsubscribeFromFollows(channel: RealtimeChannel): void {
+  supabase.removeChannel(channel);
+}

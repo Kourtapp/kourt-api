@@ -315,8 +315,9 @@ export default function InvitePlayersScreen() {
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 pb-8">
         <TouchableOpacity
           onPress={handleComplete}
-          className="bg-[#1a2634] rounded-2xl py-4 items-center"
+          className="bg-black rounded-full py-4 items-center shadow-lg"
           activeOpacity={0.8}
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 }}
         >
           <Text className="text-white font-semibold text-base">
             Concluir ({confirmedCount}/{maxPlayers} jogadores)

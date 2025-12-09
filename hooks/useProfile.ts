@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { profileService } from '@/services/profileService';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { profileService, subscribeToProfile, unsubscribeFromProfile } from '@/services/profileService';
 import {
   Profile,
   ProfileUpdate,
@@ -9,10 +9,11 @@ import {
   UserChallenge,
 } from '@/types/database.types';
 
-export function useProfile(userId: string | undefined) {
+export function useProfile(userId: string | undefined, enableRealtime = true) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
   const fetchProfile = useCallback(async () => {
     if (!userId) {
@@ -25,17 +26,37 @@ export function useProfile(userId: string | undefined) {
       setLoading(true);
       setError(null);
       const data = await profileService.getProfile(userId);
-      setProfile(data);
+      if (isMounted.current) setProfile(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar perfil');
+      if (isMounted.current) setError(err.message || 'Erro ao carregar perfil');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime || !userId) return;
+
+    const channel = subscribeToProfile(userId, (updatedProfile) => {
+      if (isMounted.current) {
+        setProfile(updatedProfile);
+      }
+    });
+
+    return () => {
+      unsubscribeFromProfile(channel);
+    };
+  }, [enableRealtime, userId]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   const updateProfile = async (updates: ProfileUpdate): Promise<Profile> => {
     if (!userId) throw new Error('Usuário não autenticado');

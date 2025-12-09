@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Booking, CreateBookingInput } from '@/types/database.types';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const bookingsService = {
   // Criar nova reserva
@@ -246,3 +247,70 @@ export const bookingsService = {
     return data || [];
   },
 };
+
+// ==================== REAL-TIME ====================
+
+export function subscribeToBookings(
+  userId: string,
+  onInsert: (booking: Booking) => void,
+  onUpdate?: (booking: Booking) => void,
+  onDelete?: (bookingId: string) => void
+): RealtimeChannel {
+  const channel = supabase
+    .channel(`bookings-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'bookings',
+        filter: `user_id=eq.${userId}`,
+      },
+      async (payload) => {
+        const { data } = await supabase
+          .from('bookings')
+          .select(`*, court:courts(id, name, address, images, sport)`)
+          .eq('id', payload.new.id)
+          .single();
+        if (data) onInsert(data as Booking);
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'bookings',
+        filter: `user_id=eq.${userId}`,
+      },
+      async (payload) => {
+        if (onUpdate) {
+          const { data } = await supabase
+            .from('bookings')
+            .select(`*, court:courts(id, name, address, images, sport)`)
+            .eq('id', payload.new.id)
+            .single();
+          if (data) onUpdate(data as Booking);
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'bookings',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        if (onDelete) onDelete(payload.old.id);
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+export function unsubscribeFromBookings(channel: RealtimeChannel): void {
+  supabase.removeChannel(channel);
+}

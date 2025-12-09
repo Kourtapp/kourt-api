@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { followService } from '@/services/followService';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { followService, subscribeToFollowers, subscribeToFollowing, unsubscribeFromFollows } from '@/services/followService';
 import { useAuthStore } from '@/stores/authStore';
 
 export function useFollow(targetUserId: string) {
@@ -60,38 +60,100 @@ export function useFollow(targetUserId: string) {
   };
 }
 
-export function useFollowers(userId: string) {
+export function useFollowers(userId: string, enableRealtime = true) {
   const [followers, setFollowers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMounted = useRef(true);
 
   const fetchFollowers = useCallback(async () => {
     setLoading(true);
     const data = await followService.getFollowers(userId);
-    setFollowers(data);
-    setLoading(false);
+    if (isMounted.current) {
+      setFollowers(data);
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => {
     fetchFollowers();
   }, [fetchFollowers]);
 
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime || !userId) return;
+
+    const channel = subscribeToFollowers(
+      userId,
+      (newFollow) => {
+        if (isMounted.current) {
+          setFollowers((prev) => [newFollow, ...prev]);
+        }
+      },
+      (deletedId) => {
+        if (isMounted.current) {
+          setFollowers((prev) => prev.filter((f) => f.id !== deletedId));
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFromFollows(channel);
+    };
+  }, [enableRealtime, userId]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
   return { followers, loading, refetch: fetchFollowers };
 }
 
-export function useFollowing(userId: string) {
+export function useFollowing(userId: string, enableRealtime = true) {
   const [following, setFollowing] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMounted = useRef(true);
 
   const fetchFollowing = useCallback(async () => {
     setLoading(true);
     const data = await followService.getFollowing(userId);
-    setFollowing(data);
-    setLoading(false);
+    if (isMounted.current) {
+      setFollowing(data);
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => {
     fetchFollowing();
   }, [fetchFollowing]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime || !userId) return;
+
+    const channel = subscribeToFollowing(
+      userId,
+      (newFollow) => {
+        if (isMounted.current) {
+          setFollowing((prev) => [newFollow, ...prev]);
+        }
+      },
+      (deletedId) => {
+        if (isMounted.current) {
+          setFollowing((prev) => prev.filter((f) => f.id !== deletedId));
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFromFollows(channel);
+    };
+  }, [enableRealtime, userId]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   return { following, loading, refetch: fetchFollowing };
 }

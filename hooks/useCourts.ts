@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { courtsService } from '@/services/courtsService';
+import { courtsService, subscribeToCourts, unsubscribeFromCourts } from '@/services/courtsService';
 import { Court, CourtsFilter, Review } from '@/types/database.types';
 
-export function useCourts(filters?: CourtsFilter) {
+export function useCourts(filters?: CourtsFilter, enableRealtime = true) {
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +36,38 @@ export function useCourts(filters?: CourtsFilter) {
     filtersRef.current = filters;
     fetchCourts();
   }, [filtersKey, fetchCourts]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime) return;
+
+    const channel = subscribeToCourts(
+      // On INSERT - add new court to list
+      (newCourt) => {
+        if (isMounted.current) {
+          setCourts((prev) => [newCourt, ...prev]);
+        }
+      },
+      // On UPDATE - update court in list
+      (updatedCourt) => {
+        if (isMounted.current) {
+          setCourts((prev) =>
+            prev.map((c) => (c.id === updatedCourt.id ? updatedCourt : c))
+          );
+        }
+      },
+      // On DELETE - remove court from list
+      (deletedId) => {
+        if (isMounted.current) {
+          setCourts((prev) => prev.filter((c) => c.id !== deletedId));
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFromCourts(channel);
+    };
+  }, [enableRealtime]);
 
   useEffect(() => {
     isMounted.current = true;

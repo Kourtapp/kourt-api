@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { matchesService } from '@/services/matchesService';
+import { matchesService, subscribeToMatches, unsubscribeFromMatches } from '@/services/matchesService';
 import {
   Match,
   MatchPlayer,
@@ -7,7 +7,7 @@ import {
   MatchesFilter,
 } from '@/types/database.types';
 
-export function useMatches(filters?: MatchesFilter) {
+export function useMatches(filters?: MatchesFilter, enableRealtime = true) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +41,35 @@ export function useMatches(filters?: MatchesFilter) {
     filtersRef.current = filters;
     fetchMatches();
   }, [filtersKey, fetchMatches]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!enableRealtime) return;
+
+    const channel = subscribeToMatches(
+      (newMatch) => {
+        if (isMounted.current) {
+          setMatches((prev) => [newMatch, ...prev]);
+        }
+      },
+      (updatedMatch) => {
+        if (isMounted.current) {
+          setMatches((prev) =>
+            prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m))
+          );
+        }
+      },
+      (deletedId) => {
+        if (isMounted.current) {
+          setMatches((prev) => prev.filter((m) => m.id !== deletedId));
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFromMatches(channel);
+    };
+  }, [enableRealtime]);
 
   useEffect(() => {
     isMounted.current = true;

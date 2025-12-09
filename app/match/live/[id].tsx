@@ -113,13 +113,37 @@ export default function LiveMatchScreen() {
   };
 
   const fetchScore = async () => {
-    if (!id) return;
-    setLoading(true);
-    const data = await getMatchScore(id);
-    if (data) {
-      setScore(data);
-    } else {
-      // Create mock score if none exists
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const data = await getMatchScore(id);
+      if (data) {
+        setScore(data);
+      } else {
+        // Create mock score if none exists
+        setScore({
+          id: `mock_${id}`,
+          match_id: id,
+          team_a_score: 0,
+          team_b_score: 0,
+          team_a_sets: 0,
+          team_b_sets: 0,
+          current_set: 1,
+          status: 'not_started',
+          sets_history: [],
+          started_at: null,
+          finished_at: null,
+          winner_team: null,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching score:', error);
+      // Create mock score on error
       setScore({
         id: `mock_${id}`,
         match_id: id,
@@ -135,8 +159,9 @@ export default function LiveMatchScreen() {
         winner_team: null,
         updated_at: new Date().toISOString(),
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleStart = async () => {

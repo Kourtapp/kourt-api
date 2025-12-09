@@ -13,8 +13,8 @@ interface ButtonProps extends TouchableOpacityProps {
   icon?: React.ReactNode;
 }
 
-// Standard dark color (TripAdvisor style)
-const BUTTON_PRIMARY_COLOR = '#1a2634';
+// Standard dark color
+const BUTTON_PRIMARY_COLOR = '#000000';
 
 export function Button({
   title,
@@ -26,12 +26,12 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'flex-row items-center justify-center rounded-2xl';
+  const baseStyles = 'flex-row items-center justify-center rounded-full';
 
   const variantStyles = {
-    primary: 'bg-[#1a2634]',
+    primary: 'bg-black',
     secondary: 'bg-gray-100',
-    outline: 'bg-transparent border border-[#1a2634]',
+    outline: 'bg-transparent border border-black',
     ghost: 'bg-transparent',
   };
 
@@ -44,9 +44,9 @@ export function Button({
 
   const textVariantStyles = {
     primary: 'text-white',
-    secondary: 'text-[#1a2634]',
-    outline: 'text-[#1a2634]',
-    ghost: 'text-[#1a2634]',
+    secondary: 'text-black',
+    outline: 'text-black',
+    ghost: 'text-black',
   };
 
   const textSizeStyles = {

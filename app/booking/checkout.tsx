@@ -390,8 +390,8 @@ export default function CheckoutScreen() {
         <Pressable
           onPress={handleConfirm}
           disabled={loading || !selectedTime}
-          className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
-            selectedTime && !loading ? 'bg-[#1a2634]' : 'bg-neutral-300'
+          className={`w-full py-4 rounded-full flex-row items-center justify-center ${
+            selectedTime && !loading ? 'bg-black' : 'bg-neutral-300'
           }`}
         >
           <Text className="font-semibold text-[15px] text-white">
