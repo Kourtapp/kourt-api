@@ -8,10 +8,13 @@ import {
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
   icon?: React.ReactNode;
 }
+
+// Standard dark color (TripAdvisor style)
+const BUTTON_PRIMARY_COLOR = '#1a2634';
 
 export function Button({
   title,
@@ -23,12 +26,12 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'flex-row items-center justify-center rounded-xl';
+  const baseStyles = 'flex-row items-center justify-center rounded-2xl';
 
   const variantStyles = {
-    primary: 'bg-primary',
+    primary: 'bg-[#1a2634]',
     secondary: 'bg-gray-100',
-    outline: 'bg-transparent border border-border',
+    outline: 'bg-transparent border border-[#1a2634]',
     ghost: 'bg-transparent',
   };
 
@@ -36,19 +39,21 @@ export function Button({
     sm: 'px-4 py-2',
     md: 'px-6 py-3',
     lg: 'px-8 py-4',
+    xl: 'px-8 py-5',
   };
 
   const textVariantStyles = {
     primary: 'text-white',
-    secondary: 'text-primary',
-    outline: 'text-primary',
-    ghost: 'text-primary',
+    secondary: 'text-[#1a2634]',
+    outline: 'text-[#1a2634]',
+    ghost: 'text-[#1a2634]',
   };
 
   const textSizeStyles = {
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',
+    xl: 'text-lg',
   };
 
   return (
@@ -59,7 +64,7 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#000'} />
+        <ActivityIndicator color={variant === 'primary' ? '#fff' : BUTTON_PRIMARY_COLOR} />
       ) : (
         <>
           {icon && <>{icon}</>}
@@ -73,3 +78,5 @@ export function Button({
     </TouchableOpacity>
   );
 }
+
+export { BUTTON_PRIMARY_COLOR };

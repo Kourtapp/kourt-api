@@ -259,42 +259,28 @@ export default function CheckinScreen() {
           <Pressable
             onPress={handleCheckin}
             disabled={verifyingLocation}
-            className="overflow-hidden rounded-2xl"
+            className="bg-[#1a2634] py-4 rounded-2xl flex-row items-center justify-center"
           >
-            <LinearGradient
-              colors={['#84CC16', '#65A30D']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              className="py-4 flex-row items-center justify-center"
-            >
-              {verifyingLocation ? (
-                <ActivityIndicator color="#1A2E05" />
-              ) : (
-                <>
-                  <MaterialIcons name="location-on" size={22} color="#1A2E05" />
-                  <Text className="text-lime-950 font-semibold text-base ml-2">
-                    Fazer Check-in
-                  </Text>
-                </>
-              )}
-            </LinearGradient>
+            {verifyingLocation ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <MaterialIcons name="location-on" size={22} color="#fff" />
+                <Text className="text-white font-semibold text-base ml-2">
+                  Fazer Check-in
+                </Text>
+              </>
+            )}
           </Pressable>
         ) : allPlayersReady ? (
           <Pressable
             onPress={handleStartMatch}
-            className="overflow-hidden rounded-2xl"
+            className="bg-[#1a2634] py-4 rounded-2xl flex-row items-center justify-center"
           >
-            <LinearGradient
-              colors={['#000', '#262626']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              className="py-4 flex-row items-center justify-center"
-            >
-              <MaterialIcons name="play-arrow" size={24} color="#84CC16" />
-              <Text className="text-white font-semibold text-base ml-2">
-                Iniciar Partida
-              </Text>
-            </LinearGradient>
+            <MaterialIcons name="play-arrow" size={24} color="#fff" />
+            <Text className="text-white font-semibold text-base ml-2">
+              Iniciar Partida
+            </Text>
           </Pressable>
         ) : (
           <View className="py-4 bg-neutral-100 rounded-2xl items-center">

@@ -227,9 +227,10 @@ export default function MatchDetailScreen() {
             </View>
             <View className="gap-2">
               {players.map((player: any) => (
-                <View
+                <Pressable
                   key={player.id}
-                  className="flex-row items-center p-3 bg-neutral-50 rounded-xl"
+                  onPress={() => player.user?.id && router.push(`/profile/${player.user.id}` as any)}
+                  className="flex-row items-center p-3 bg-neutral-50 rounded-xl active:bg-neutral-100"
                 >
                   <View className="w-10 h-10 bg-neutral-300 rounded-full items-center justify-center">
                     <Text className="font-bold text-neutral-600">
@@ -258,12 +259,19 @@ export default function MatchDetailScreen() {
                       Nível {player.user?.level || 1}
                     </Text>
                   </View>
-                  <MaterialIcons
-                    name="chat-bubble-outline"
-                    size={20}
-                    color="#A3A3A3"
-                  />
-                </View>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      // TODO: Open chat with player
+                    }}
+                  >
+                    <MaterialIcons
+                      name="chat-bubble-outline"
+                      size={20}
+                      color="#A3A3A3"
+                    />
+                  </Pressable>
+                </Pressable>
               ))}
 
               {/* Empty Slots */}
@@ -401,44 +409,63 @@ export default function MatchDetailScreen() {
       </ScrollView>
 
       {/* Fixed Bottom CTA */}
-      {!isOrganizer && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-5 py-4 pb-8">
-          {isUserInMatch ? (
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-5 py-4 pb-8">
+        {isOrganizer ? (
+          <View className="flex-row gap-3">
             <Pressable
-              onPress={handleLeave}
-              disabled={isLoading}
-              className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
-                isLoading ? 'bg-neutral-300' : 'bg-red-500'
-              }`}
+              onPress={() => router.push(`/match/${id}/invite` as any)}
+              className="flex-1 py-4 rounded-2xl flex-row items-center justify-center bg-neutral-100"
             >
-              <MaterialIcons name="logout" size={20} color="#FFF" />
-              <Text className="text-white font-semibold text-[15px] ml-2">
-                {isLoading ? 'Saindo...' : 'Sair da Partida'}
+              <MaterialIcons name="person-add" size={20} color="#525252" />
+              <Text className="text-neutral-700 font-semibold text-[15px] ml-2">
+                Convidar
               </Text>
             </Pressable>
-          ) : spotsLeft > 0 ? (
             <Pressable
-              onPress={handleJoin}
-              disabled={isLoading}
-              className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
-                isLoading ? 'bg-neutral-300' : 'bg-lime-500'
-              }`}
+              onPress={() => router.push(`/match/${id}/checkin` as any)}
+              className="flex-1 py-4 rounded-2xl flex-row items-center justify-center bg-[#84CC16]"
             >
-              <MaterialIcons name="group-add" size={20} color="#1A2E05" />
+              <MaterialIcons name="play-arrow" size={20} color="#1A2E05" />
               <Text className="text-lime-950 font-semibold text-[15px] ml-2">
-                {isLoading ? 'Entrando...' : 'Entrar na Partida'}
+                Iniciar
               </Text>
             </Pressable>
-          ) : (
-            <View className="w-full py-4 rounded-2xl flex-row items-center justify-center bg-neutral-200">
-              <MaterialIcons name="block" size={20} color="#737373" />
-              <Text className="text-neutral-600 font-semibold text-[15px] ml-2">
-                Partida Lotada
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
+          </View>
+        ) : isUserInMatch ? (
+          <Pressable
+            onPress={handleLeave}
+            disabled={isLoading}
+            className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
+              isLoading ? 'bg-neutral-300' : 'bg-red-500'
+            }`}
+          >
+            <MaterialIcons name="logout" size={20} color="#FFF" />
+            <Text className="text-white font-semibold text-[15px] ml-2">
+              {isLoading ? 'Saindo...' : 'Sair da Partida'}
+            </Text>
+          </Pressable>
+        ) : spotsLeft > 0 ? (
+          <Pressable
+            onPress={handleJoin}
+            disabled={isLoading}
+            className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
+              isLoading ? 'bg-neutral-300' : 'bg-[#84CC16]'
+            }`}
+          >
+            <MaterialIcons name="group-add" size={20} color="#1A2E05" />
+            <Text className="text-lime-950 font-semibold text-[15px] ml-2">
+              {isLoading ? 'Entrando...' : 'Entrar na Partida'}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="w-full py-4 rounded-2xl flex-row items-center justify-center bg-neutral-200">
+            <MaterialIcons name="block" size={20} color="#737373" />
+            <Text className="text-neutral-600 font-semibold text-[15px] ml-2">
+              Partida Lotada
+            </Text>
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }

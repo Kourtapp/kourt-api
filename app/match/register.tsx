@@ -754,24 +754,21 @@ export default function RegisterMatchScreen() {
 
       {/* Bottom Register Button */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 pb-8">
-        <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
-          <LinearGradient
-            colors={['#84CC16', '#65A30D']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="rounded-xl py-4 items-center flex-row justify-center"
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <MaterialIcons name="check-circle" size={20} color="#fff" />
-                <Text className="text-white font-semibold text-base ml-2">
-                  Registrar Partida (+{calculateXP()} XP)
-                </Text>
-              </>
-            )}
-          </LinearGradient>
+        <TouchableOpacity
+          onPress={handleRegister}
+          disabled={isLoading}
+          className={`rounded-2xl py-4 items-center flex-row justify-center ${isLoading ? 'bg-neutral-300' : 'bg-[#1a2634]'}`}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <MaterialIcons name="check-circle" size={20} color="#fff" />
+              <Text className="text-white font-semibold text-base ml-2">
+                Registrar Partida (+{calculateXP()} XP)
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

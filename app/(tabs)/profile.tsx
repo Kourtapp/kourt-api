@@ -19,6 +19,7 @@ import { useAchievements, useUserMatches, useBookings, useCourts } from '@/hooks
 import { ProfileCheckInModal } from '@/components/modals/ProfileCheckInModal';
 import SejaHostCard from '@/components/SejaHostCard';
 import SejaPremiumCard from '@/components/SejaPremiumCard';
+import { FEATURES } from '@/lib/featureFlags';
 
 const { width } = Dimensions.get('window');
 
@@ -119,7 +120,7 @@ export default function ProfileScreen() {
                   <Text className="text-3xl font-bold text-neutral-400">{userInitial}</Text>
                 </View>
               )}
-              {profile?.subscription === 'pro' && (
+              {FEATURES.SUBSCRIPTIONS && profile?.subscription === 'pro' && (
                 <View className="absolute -bottom-1 -right-1 bg-black px-2 py-0.5 rounded-full border-2 border-white">
                   <Text className="text-[10px] font-bold text-white">PRO</Text>
                 </View>
@@ -142,14 +143,18 @@ export default function ProfileScreen() {
 
         {/* Stats row */}
         <View className="flex-row items-center px-5 py-4 border-b border-neutral-100">
-          <Pressable className="items-center mr-6">
-            <Text className="text-lg font-bold text-black">{profile?.following_count || 0}</Text>
-            <Text className="text-xs text-neutral-500">Seguindo</Text>
-          </Pressable>
-          <Pressable className="items-center mr-6">
-            <Text className="text-lg font-bold text-black">{profile?.followers_count || 0}</Text>
-            <Text className="text-xs text-neutral-500">Seguidores</Text>
-          </Pressable>
+          {FEATURES.FOLLOWERS && (
+            <>
+              <Pressable className="items-center mr-6">
+                <Text className="text-lg font-bold text-black">{profile?.following_count || 0}</Text>
+                <Text className="text-xs text-neutral-500">Seguindo</Text>
+              </Pressable>
+              <Pressable className="items-center mr-6">
+                <Text className="text-lg font-bold text-black">{profile?.followers_count || 0}</Text>
+                <Text className="text-xs text-neutral-500">Seguidores</Text>
+              </Pressable>
+            </>
+          )}
           <Pressable className="items-center mr-auto">
             <Text className="text-lg font-bold text-black">{totalMatches}</Text>
             <Text className="text-xs text-neutral-500">Partidas</Text>
@@ -175,27 +180,29 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Tabs */}
-        <View className="flex-row border-b border-neutral-100">
-          <Pressable
-            onPress={() => setActiveTab('partidas')}
-            className={`flex-1 py-4 items-center border-b-2 ${activeTab === 'partidas' ? 'border-black' : 'border-transparent'}`}
-          >
-            <Text className={`text-sm font-medium ${activeTab === 'partidas' ? 'text-black' : 'text-neutral-500'}`}>
-              Partidas
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab('estatisticas')}
-            className={`flex-1 py-4 items-center border-b-2 ${activeTab === 'estatisticas' ? 'border-black' : 'border-transparent'}`}
-          >
-            <Text className={`text-sm font-medium ${activeTab === 'estatisticas' ? 'text-black' : 'text-neutral-500'}`}>
-              Estatísticas
-            </Text>
-          </Pressable>
-        </View>
+        {/* Tabs - only show if advanced stats are enabled */}
+        {FEATURES.ADVANCED_STATS && (
+          <View className="flex-row border-b border-neutral-100">
+            <Pressable
+              onPress={() => setActiveTab('partidas')}
+              className={`flex-1 py-4 items-center border-b-2 ${activeTab === 'partidas' ? 'border-black' : 'border-transparent'}`}
+            >
+              <Text className={`text-sm font-medium ${activeTab === 'partidas' ? 'text-black' : 'text-neutral-500'}`}>
+                Partidas
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab('estatisticas')}
+              className={`flex-1 py-4 items-center border-b-2 ${activeTab === 'estatisticas' ? 'border-black' : 'border-transparent'}`}
+            >
+              <Text className={`text-sm font-medium ${activeTab === 'estatisticas' ? 'text-black' : 'text-neutral-500'}`}>
+                Estatísticas
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
-        {activeTab === 'partidas' ? (
+        {(activeTab === 'partidas' || !FEATURES.ADVANCED_STATS) ? (
           <View className="px-5 py-4">
             {/* Sport filters */}
             <View className="flex-row gap-2 mb-6">
@@ -252,8 +259,8 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Premium Banner */}
-            {!isPro && (
+            {/* Premium Banner - only show if subscriptions are enabled */}
+            {FEATURES.SUBSCRIPTIONS && !isPro && (
               <View className="-mx-5">
                 <SejaPremiumCard />
               </View>
@@ -282,13 +289,31 @@ export default function ProfileScreen() {
               </View>
             )}
 
+            {/* Referral Banner */}
+            {FEATURES.REFERRALS && (
+              <Pressable
+                onPress={() => router.push('/referrals' as any)}
+                className="mb-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 flex-row items-center"
+                style={{ backgroundColor: '#22C55E' }}
+              >
+                <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
+                  <MaterialIcons name="card-giftcard" size={24} color="white" />
+                </View>
+                <View className="flex-1 ml-3">
+                  <Text className="text-white font-bold">Convide Amigos</Text>
+                  <Text className="text-white/80 text-sm">Ganhe XP e recompensas</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="white" />
+              </Pressable>
+            )}
+
             {/* Activities Menu */}
             <View className="bg-white rounded-2xl border border-neutral-100">
               {[
                 { icon: 'event', label: 'Activities', subtitle: 'Today', route: '/history' },
                 { icon: 'bar-chart', label: 'Statistics', subtitle: `This year: ${totalMatches} partidas`, route: '/statistics' },
-                { icon: 'route', label: 'Routes', subtitle: '22 quadras', route: '/routes' },
-                { icon: 'place', label: 'Segments', subtitle: '3', route: '/segments' },
+                { icon: 'notifications', label: 'Notificacoes', subtitle: 'Configurar alertas', route: '/notification-settings' },
+                { icon: 'help', label: 'Ajuda', subtitle: 'FAQ e suporte', route: '/help' },
                 { icon: 'article', label: 'Posts', subtitle: '112', route: '/posts' },
                 { icon: 'sports-tennis', label: 'Gear', subtitle: 'Drop Shot Conqueror 12', route: '/gear' },
               ].map((item, index) => (
@@ -309,69 +334,76 @@ export default function ProfileScreen() {
               ))}
             </View>
 
-            {/* Trophy Case */}
-            <View className="mt-6">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-lg font-bold text-black">Trophy Case</Text>
-                <Text className="text-sm text-neutral-500">{achievements.length}</Text>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="flex-row gap-3">
-                  {achievements.length > 0 ? achievements.slice(0, 4).map((achievement: any, index: number) => (
-                    <View key={achievement.id} className="w-20 items-center">
-                      <View className="w-16 h-16 bg-neutral-900 rounded-xl items-center justify-center mb-2">
-                        <Text className="text-amber-400 text-xl font-bold">
-                          {achievement.title?.charAt(0) || '🏆'}
+            {/* Trophy Case - only show if achievements are enabled */}
+            {FEATURES.ACHIEVEMENTS && (
+              <View className="mt-6">
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-lg font-bold text-black">Trophy Case</Text>
+                  <Text className="text-sm text-neutral-500">{achievements.length}</Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View className="flex-row gap-3">
+                    {achievements.length > 0 ? achievements.slice(0, 4).map((achievement: any, index: number) => (
+                      <View key={achievement.id} className="w-20 items-center">
+                        <View className="w-16 h-16 bg-neutral-900 rounded-xl items-center justify-center mb-2">
+                          <Text className="text-amber-400 text-xl font-bold">
+                            {achievement.title?.charAt(0) || '🏆'}
+                          </Text>
+                        </View>
+                        <Text className="text-xs text-neutral-500 text-center">
+                          {achievement.title || 'Trophy'}
                         </Text>
                       </View>
-                      <Text className="text-xs text-neutral-500 text-center">
-                        {achievement.title || 'Trophy'}
-                      </Text>
-                    </View>
-                  )) : (
-                    <View className="w-20 items-center">
-                      <View className="w-16 h-16 bg-neutral-100 rounded-xl items-center justify-center mb-2">
-                        <MaterialIcons name="emoji-events" size={24} color="#D4D4D4" />
+                    )) : (
+                      <View className="w-20 items-center">
+                        <View className="w-16 h-16 bg-neutral-100 rounded-xl items-center justify-center mb-2">
+                          <MaterialIcons name="emoji-events" size={24} color="#D4D4D4" />
+                        </View>
+                        <Text className="text-xs text-neutral-400 text-center">
+                          Sem troféus
+                        </Text>
                       </View>
-                      <Text className="text-xs text-neutral-400 text-center">
-                        Sem troféus
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </ScrollView>
-              <Pressable
-                onPress={() => router.push('/achievements' as any)}
-                className="mt-4"
-              >
-                <Text className="text-sm text-neutral-500">All trophies →</Text>
-              </Pressable>
-            </View>
-
-            {/* Clubs */}
-            <View className="mt-6 mb-8">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-lg font-bold text-black">Clubs</Text>
-                <Text className="text-sm text-neutral-500">0</Text>
-              </View>
-              <View className="flex-row gap-3">
-                <Pressable className="items-center">
-                  <View className="w-14 h-14 bg-red-500 rounded-xl items-center justify-center mb-1">
-                    <Text className="text-white font-bold">N+</Text>
+                    )}
                   </View>
-                  <Text className="text-xs text-neutral-600">Nike Run...</Text>
-                </Pressable>
+                </ScrollView>
                 <Pressable
-                  onPress={() => router.push('/clubs' as any)}
-                  className="items-center"
+                  onPress={() => router.push('/achievements' as any)}
+                  className="mt-4"
                 >
-                  <View className="w-14 h-14 bg-neutral-100 rounded-xl items-center justify-center mb-1 border border-dashed border-neutral-300">
-                    <MaterialIcons name="add" size={24} color="#A3A3A3" />
-                  </View>
-                  <Text className="text-xs text-neutral-500">Entrar</Text>
+                  <Text className="text-sm text-neutral-500">All trophies →</Text>
                 </Pressable>
               </View>
-            </View>
+            )}
+
+            {/* Clubs - only show if clubs feature is enabled */}
+            {FEATURES.CLUBS && (
+              <View className="mt-6 mb-8">
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-lg font-bold text-black">Clubs</Text>
+                  <Text className="text-sm text-neutral-500">0</Text>
+                </View>
+                <View className="flex-row gap-3">
+                  <Pressable className="items-center">
+                    <View className="w-14 h-14 bg-red-500 rounded-xl items-center justify-center mb-1">
+                      <Text className="text-white font-bold">N+</Text>
+                    </View>
+                    <Text className="text-xs text-neutral-600">Nike Run...</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push('/clubs' as any)}
+                    className="items-center"
+                  >
+                    <View className="w-14 h-14 bg-neutral-100 rounded-xl items-center justify-center mb-1 border border-dashed border-neutral-300">
+                      <MaterialIcons name="add" size={24} color="#A3A3A3" />
+                    </View>
+                    <Text className="text-xs text-neutral-500">Entrar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {/* Spacer for MVP mode */}
+            {!FEATURES.ACHIEVEMENTS && !FEATURES.CLUBS && <View className="h-8" />}
           </View>
         ) : (
           <StatisticsTab

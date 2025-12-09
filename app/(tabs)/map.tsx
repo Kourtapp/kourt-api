@@ -272,7 +272,6 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const {
     location,
-    isLoading: locationLoading,
     error: locationError,
   } = useLocation();
   const { courts, loading: courtsLoading } = useCourts();
@@ -409,19 +408,6 @@ export default function MapScreen() {
     }
   }, [viewMode, handleMarkerPress]);
 
-  // Loading state
-  if (locationLoading) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <View className="w-20 h-20 bg-neutral-100 rounded-full items-center justify-center mb-4">
-          <MaterialIcons name="location-searching" size={40} color="#000" />
-        </View>
-        <Text className="text-lg font-semibold text-black">Localizando...</Text>
-        <Text className="text-sm text-neutral-500 mt-1">Obtendo sua localização</Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-neutral-100">
       {/* Map */}
@@ -518,18 +504,19 @@ export default function MapScreen() {
             </Pressable>
           </View>
 
-          {/* Court Type Filters - Colored */}
+          {/* Combined Filters - Single Row */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mt-3 -mx-5 px-5"
           >
-            <View className="flex-row gap-2">
+            <View className="flex-row gap-2 items-center">
+              {/* Court Type Filters */}
               {COURT_TYPE_FILTERS.map((filter) => {
                 const isSelected = selectedType === filter.id;
                 return (
                   <Pressable
-                    key={filter.id}
+                    key={`type-${filter.id}`}
                     onPress={() => setSelectedType(filter.id)}
                     className="flex-row items-center gap-1.5 px-4 py-2.5 rounded-full border"
                     style={{
@@ -551,40 +538,38 @@ export default function MapScreen() {
                   </Pressable>
                 );
               })}
-            </View>
-          </ScrollView>
 
-          {/* Sport Filters - Minimalist with icons */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mt-3 -mx-5 px-5"
-          >
-            <View className="flex-row gap-2">
-              {SPORT_FILTERS.map((filter) => (
-                <Pressable
-                  key={filter.id}
-                  onPress={() => setSelectedSport(filter.id)}
-                  className={`flex-row items-center gap-1.5 px-4 py-2.5 rounded-full ${
-                    selectedSport === filter.id
-                      ? 'bg-black'
-                      : 'bg-white border border-neutral-200'
-                  }`}
-                >
-                  <MaterialIcons
-                    name={filter.icon as any}
-                    size={16}
-                    color={selectedSport === filter.id ? '#fff' : '#525252'}
-                  />
-                  <Text
-                    className={`text-sm font-medium ${
-                      selectedSport === filter.id ? 'text-white' : 'text-neutral-700'
+              {/* Divider */}
+              <View className="w-px h-8 bg-neutral-200 mx-1" />
+
+              {/* Sport Filters */}
+              {SPORT_FILTERS.filter(s => s.id !== 'all').map((filter) => {
+                const isSelected = selectedSport === filter.id;
+                return (
+                  <Pressable
+                    key={`sport-${filter.id}`}
+                    onPress={() => setSelectedSport(isSelected ? 'all' : filter.id)}
+                    className={`flex-row items-center gap-1.5 px-4 py-2.5 rounded-full ${
+                      isSelected
+                        ? 'bg-black'
+                        : 'bg-white border border-neutral-200'
                     }`}
                   >
-                    {filter.label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <MaterialIcons
+                      name={filter.icon as any}
+                      size={16}
+                      color={isSelected ? '#fff' : '#525252'}
+                    />
+                    <Text
+                      className={`text-sm font-medium ${
+                        isSelected ? 'text-white' : 'text-neutral-700'
+                      }`}
+                    >
+                      {filter.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 

@@ -313,17 +313,14 @@ export default function InvitePlayersScreen() {
 
       {/* Bottom CTA */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 pb-8">
-        <TouchableOpacity onPress={handleComplete}>
-          <LinearGradient
-            colors={['#22C55E', '#16A34A']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="rounded-xl py-4 items-center"
-          >
-            <Text className="text-white font-semibold text-base">
-              Concluir ({confirmedCount}/{maxPlayers} jogadores)
-            </Text>
-          </LinearGradient>
+        <TouchableOpacity
+          onPress={handleComplete}
+          className="bg-[#1a2634] rounded-2xl py-4 items-center"
+          activeOpacity={0.8}
+        >
+          <Text className="text-white font-semibold text-base">
+            Concluir ({confirmedCount}/{maxPlayers} jogadores)
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

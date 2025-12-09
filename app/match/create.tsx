@@ -13,7 +13,6 @@ import { useState } from 'react';
 import { useCreateMatch, useCourts } from '@/hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { CreateMatchInput } from '@/types/database.types';
-import { LinearGradient } from 'expo-linear-gradient';
 
 // Esportes ordenados por popularidade no Brasil
 const sports = [
@@ -414,36 +413,18 @@ export default function CreateMatchScreen() {
         <Pressable
           onPress={handleCreate}
           disabled={loading}
-          style={{ borderRadius: 16, overflow: 'hidden' }}
+          className={`py-4 rounded-2xl flex-row items-center justify-center ${
+            loading ? 'bg-neutral-300' : 'bg-[#1a2634]'
+          }`}
         >
-          <LinearGradient
-            colors={['#84CC16', '#65A30D']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{
-              paddingVertical: 14,
-              paddingHorizontal: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <MaterialIcons
-              name={matchType === 'ranked' ? 'emoji-events' : 'sports-tennis'}
-              size={22}
-              color={matchType === 'ranked' ? '#1A2E05' : '#fff'}
-            />
-            <Text
-              style={{
-                fontWeight: '600',
-                fontSize: 16,
-                color: matchType === 'ranked' ? '#1A2E05' : '#fff',
-                marginLeft: 10,
-              }}
-            >
-              {loading ? 'Criando...' : matchType === 'ranked' ? 'Criar Partida PRO' : 'Criar Partida'}
-            </Text>
-          </LinearGradient>
+          <MaterialIcons
+            name={matchType === 'ranked' ? 'emoji-events' : 'sports-tennis'}
+            size={22}
+            color="#fff"
+          />
+          <Text className="font-semibold text-base text-white ml-2">
+            {loading ? 'Criando...' : matchType === 'ranked' ? 'Criar Partida PRO' : 'Criar Partida'}
+          </Text>
         </Pressable>
 
         {/* XP indicator */}

@@ -237,16 +237,36 @@ export default function SubscriptionScreen() {
               {isPlanPro ? (
                 <LinearGradient
                   colors={['#d4af37', '#f4e4a6', '#d4af37']}
-                  className="w-20 h-20 rounded-2xl items-center justify-center mb-4"
-                  style={{ shadowColor: '#d4af37', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16 }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 16,
+                    shadowColor: '#d4af37',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 16
+                  }}
                 >
                   <MaterialIcons name="workspace-premium" size={40} color="#fff" />
                 </LinearGradient>
               ) : (
                 <LinearGradient
                   colors={['#84cc16', '#22c55e']}
-                  className="w-20 h-20 rounded-2xl items-center justify-center mb-4"
-                  style={{ shadowColor: '#84cc16', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16 }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 16,
+                    shadowColor: '#84cc16',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 16
+                  }}
                 >
                   <MaterialIcons name="videocam" size={40} color="#fff" />
                 </LinearGradient>
@@ -275,7 +295,13 @@ export default function SubscriptionScreen() {
                 {isPlanPro ? (
                   <LinearGradient
                     colors={['#d4af37', '#f4e4a6']}
-                    className="w-6 h-6 rounded-full items-center justify-center"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
                   >
                     <MaterialIcons name="check" size={16} color="#0a0a0a" />
                   </LinearGradient>

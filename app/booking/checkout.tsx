@@ -391,14 +391,10 @@ export default function CheckoutScreen() {
           onPress={handleConfirm}
           disabled={loading || !selectedTime}
           className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
-            selectedTime && !loading ? 'bg-lime-500' : 'bg-neutral-300'
+            selectedTime && !loading ? 'bg-[#1a2634]' : 'bg-neutral-300'
           }`}
         >
-          <Text
-            className={`font-semibold text-[15px] ${
-              selectedTime ? 'text-lime-950' : 'text-white'
-            }`}
-          >
+          <Text className="font-semibold text-[15px] text-white">
             {loading
               ? 'Processando...'
               : court.is_free

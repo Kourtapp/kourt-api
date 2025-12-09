@@ -159,7 +159,7 @@ export default function LevelScreen() {
           onPress={handleContinue}
           disabled={!allLevelsSet}
           className={`w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
-            allLevelsSet ? 'bg-black' : 'bg-neutral-300'
+            allLevelsSet ? 'bg-[#1a2634]' : 'bg-neutral-300'
           }`}
         >
           <Text className="text-white font-semibold text-[15px]">

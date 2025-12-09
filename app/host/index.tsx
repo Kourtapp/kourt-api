@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -46,7 +45,7 @@ export default function HostTodayScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <View className="flex-1 bg-white">
       {/* Tabs */}
       <View className="flex-row border-b border-[#F0F0F0]">
         <Pressable
@@ -181,6 +180,6 @@ export default function HostTodayScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 
@@ -483,7 +482,7 @@ export default function HostRegisterScreen() {
       </KeyboardAvoidingView>
 
       {/* Bottom CTA */}
-      <View className="px-5 py-4 border-t border-neutral-100">
+      <View className="px-5 py-4 pb-8 border-t border-neutral-100">
         <Pressable
           onPress={() => {
             if (loading) return;
@@ -494,27 +493,23 @@ export default function HostRegisterScreen() {
               handleSubmit();
             }
           }}
-          style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+          disabled={!canProceed() || loading}
+          className={`py-4 rounded-2xl items-center flex-row justify-center gap-2 ${
+            canProceed() && !loading ? 'bg-[#EC4899]' : 'bg-neutral-300'
+          }`}
         >
-          <LinearGradient
-            colors={canProceed() && !loading ? ['#84CC16', '#65A30D'] : ['#D4D4D4', '#A3A3A3']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="py-4 rounded-2xl items-center flex-row justify-center gap-2"
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Text className="text-base font-semibold text-white">
-                  {step < 4 ? 'Continuar' : 'Enviar Solicitação'}
-                </Text>
-                {step < 4 && canProceed() && (
-                  <MaterialIcons name="arrow-forward" size={20} color="#fff" />
-                )}
-              </>
-            )}
-          </LinearGradient>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Text className="text-base font-semibold text-white">
+                {step < 4 ? 'Continuar' : 'Enviar Solicitação'}
+              </Text>
+              {step < 4 && canProceed() && (
+                <MaterialIcons name="arrow-forward" size={20} color="#fff" />
+              )}
+            </>
+          )}
         </Pressable>
 
         {/* Step indicator text */}

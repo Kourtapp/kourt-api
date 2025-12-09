@@ -23,6 +23,7 @@ import {
   RacketSticker,
 } from '@/components/stickers';
 import { Animated3DButton } from '@/components/Animated3DButton';
+import { FEATURES } from '@/lib/featureFlags';
 
 // Action cards for quick access
 const ACTION_CARDS = [
@@ -32,6 +33,7 @@ const ACTION_CARDS = [
     description: 'Foto, metricas e pontos XP',
     route: '/match/record',
     style: 'light',
+    requiresFeature: 'XP_SYSTEM' as const,
   },
   {
     icon: 'radio-button-unchecked',
@@ -39,6 +41,7 @@ const ACTION_CARDS = [
     description: 'Monte uma partida com amigos',
     route: '/match/create',
     style: 'dark',
+    requiresFeature: null,
   },
   {
     icon: 'location-on',
@@ -46,6 +49,7 @@ const ACTION_CARDS = [
     description: 'Publica, privada ou arena',
     route: '/court/add',
     style: 'light',
+    requiresFeature: null,
   },
 ];
 
@@ -207,7 +211,9 @@ export default function PlusScreen() {
 
         {/* Action Cards */}
         <View className="px-5 gap-3 mb-8">
-          {ACTION_CARDS.map((card, index) => (
+          {ACTION_CARDS
+            .filter(card => !card.requiresFeature || FEATURES[card.requiresFeature])
+            .map((card, index) => (
             <Pressable
               key={index}
               onPress={() => router.push(card.route as any)}
@@ -258,7 +264,8 @@ export default function PlusScreen() {
           ))}
         </View>
 
-        {/* Plans Section */}
+        {/* Plans Section - only show if subscriptions are enabled */}
+        {FEATURES.SUBSCRIPTIONS && (
         <View className="mx-5 rounded-3xl overflow-hidden">
           <LinearGradient
             colors={['#1A1A1A', '#0D0D0D']}
@@ -458,6 +465,7 @@ export default function PlusScreen() {
             </Pressable>
           </LinearGradient>
         </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

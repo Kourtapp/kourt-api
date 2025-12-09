@@ -104,7 +104,7 @@ export default function BookingConfirmedScreen() {
         >
           <Pressable
             onPress={handleCreateMatch}
-            className="w-full py-4 bg-black rounded-2xl items-center"
+            className="w-full py-4 bg-[#1a2634] rounded-2xl items-center"
           >
             <Text className="text-white font-semibold">Criar Partida</Text>
           </Pressable>
@@ -115,7 +115,7 @@ export default function BookingConfirmedScreen() {
             }}
             className="w-full py-4 bg-neutral-100 rounded-2xl items-center"
           >
-            <Text className="text-black font-semibold">Convidar Amigos</Text>
+            <Text className="text-[#1a2634] font-semibold">Convidar Amigos</Text>
           </Pressable>
 
           <Pressable

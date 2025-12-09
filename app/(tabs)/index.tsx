@@ -14,8 +14,8 @@ import { router } from 'expo-router';
 import { useState, useCallback, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useMatches, useCourts, useLocation } from '@/hooks';
-import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
+import { PlusSubscriptionCard } from '@/components/PlusSubscriptionCard';
 
 // Sport filters
 const SPORT_FILTERS = [
@@ -251,18 +251,19 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Court Type Filters */}
+        {/* Combined Filters - Single Row */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-          className="mb-3"
+          className="mb-6"
         >
+          {/* Court Type Filters */}
           {COURT_TYPE_FILTERS.map((filter) => {
             const isSelected = selectedFilter === filter.id;
             return (
               <Pressable
-                key={filter.id}
+                key={`type-${filter.id}`}
                 onPress={() => setSelectedFilter(filter.id)}
                 className={`flex-row items-center px-4 py-2.5 rounded-full border ${isSelected ? 'border-transparent' : 'border-[#EBEBEB]'
                   }`}
@@ -282,21 +283,17 @@ export default function HomeScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
 
-        {/* Sport Filters */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-          className="mb-6"
-        >
-          {SPORT_FILTERS.map((sport) => {
+          {/* Divider */}
+          <View className="w-px h-8 bg-[#EBEBEB] self-center mx-1" />
+
+          {/* Sport Filters */}
+          {SPORT_FILTERS.filter(s => s.id !== 'all').map((sport) => {
             const isSelected = selectedSport === sport.id;
             return (
               <Pressable
-                key={sport.id}
-                onPress={() => setSelectedSport(sport.id)}
+                key={`sport-${sport.id}`}
+                onPress={() => setSelectedSport(isSelected ? 'all' : sport.id)}
                 className={`flex-row items-center px-4 py-2.5 rounded-full border ${isSelected ? 'bg-[#222222] border-[#222222]' : 'bg-white border-[#EBEBEB]'
                   }`}
               >
@@ -619,30 +616,6 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Tournaments Section - NEW */}
-        <View className="mb-6">
-          <View className="px-5 flex-row items-center justify-between mb-3">
-            <Text className="text-lg font-semibold text-[#222222]">Torneios & Eventos</Text>
-            <Pressable onPress={() => router.push('/tournaments' as any)}>
-              <Text className="text-sm text-[#717171]">Ver todos</Text>
-            </Pressable>
-          </View>
-          <View className="px-5">
-            <Pressable
-              onPress={() => router.push('/tournaments' as any)}
-              className="bg-blue-600 rounded-2xl p-5 flex-row justify-between items-center shadow-sm"
-            >
-              <View>
-                <Text className="text-white font-bold text-lg mb-1">Copa Kourt Verão ☀️</Text>
-                <Text className="text-blue-100 text-xs">Inscreva-se e suba no ranking!</Text>
-              </View>
-              <View className="bg-white/20 p-2 rounded-full">
-                <MaterialIcons name="emoji-events" size={24} color="#fff" />
-              </View>
-            </Pressable>
-          </View>
-        </View>
-
         {/* Partidas Abertas */}
         <View className="mb-6">
           <View className="px-5 flex-row items-center justify-between mb-3">
@@ -710,47 +683,10 @@ export default function HomeScreen() {
 
         {/* Upgrade Banner - Only for non-pro users */}
         {profile?.subscription !== 'pro' && (
-          <View className="px-5 mt-2 mb-6">
-            <Pressable onPress={() => router.push('/subscription' as any)}>
-              <LinearGradient
-                colors={['#14532D', '#166534', '#14532D']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="rounded-2xl p-4 flex-row items-center"
-              >
-                {/* Icon - no background, just the icon */}
-                <View className="mr-3">
-                  <MaterialIcons name="bolt" size={28} color="#22C55E" />
-                </View>
-
-                {/* Text Content */}
-                <View className="flex-1">
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-[18px] font-bold text-white">
-                      Seja Plus
-                    </Text>
-                    <View className="bg-[#22C55E] px-2.5 py-1 rounded-full">
-                      <Text className="text-[11px] font-bold text-white">
-                        -15%
-                      </Text>
-                    </View>
-                  </View>
-                  <Text className="text-[13px] text-white/50 mt-0.5">
-                    Comece com R$ 14,90/mês
-                  </Text>
-                </View>
-
-                {/* Button */}
-                <Pressable
-                  onPress={() => router.push('/subscription' as any)}
-                  className="px-5 py-3 rounded-xl bg-[#22C55E]"
-                >
-                  <Text className="text-[14px] font-bold text-white">
-                    Assinar
-                  </Text>
-                </Pressable>
-              </LinearGradient>
-            </Pressable>
+          <View className="mt-2 mb-6">
+            <PlusSubscriptionCard
+              onPress={() => router.push('/subscription' as any)}
+            />
           </View>
         )}
       </ScrollView>

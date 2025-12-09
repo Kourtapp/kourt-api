@@ -125,7 +125,7 @@ export default function GoalsScreen() {
           onPress={handleFinish}
           disabled={loading || selected.length === 0}
           className={`w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
-            selected.length > 0 && !loading ? 'bg-black' : 'bg-neutral-300'
+            selected.length > 0 && !loading ? 'bg-[#1a2634]' : 'bg-neutral-300'
           }`}
         >
           <Text className="font-semibold text-[15px] text-white">
