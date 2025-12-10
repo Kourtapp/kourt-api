@@ -8,9 +8,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import '../global.css';
 
-// Replace with your actual Stripe Test Publishable Key
-// IMPORTANT: Get this from your Stripe Dashboard (Developers > API Keys)
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51PqJ...ReplaceWithYourKey';
+// Stripe Publishable Key from environment variables
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isInitialized } = useAuthStore();

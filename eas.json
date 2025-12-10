@@ -42,6 +42,12 @@
     }
   },
   "submit": {
+    "preview": {
+      "ios": {
+        "appleId": "brunokiki_28@hotmail.com",
+        "ascAppId": "6756223369"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "brunokiki_28@hotmail.com",

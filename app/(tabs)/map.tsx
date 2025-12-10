@@ -18,6 +18,7 @@ import MapView, { Marker, PROVIDER_DEFAULT, Region, Callout } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocation, useCourts } from '@/hooks';
 import { Court } from '@/types/database.types';
+import { MapFiltersModal, MapFilters } from '@/components/map/MapFiltersModal';
 
 const { width, height } = Dimensions.get('window');
 const BOTTOM_SHEET_MAX = height * 0.6;
@@ -283,6 +284,14 @@ export default function MapScreen() {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [showFilters, setShowFilters] = useState(false);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<MapFilters>({
+    priceMin: 0,
+    priceMax: 200,
+    includeFree: true,
+    sports: [],
+    courtTypes: [],
+  });
 
   // Bottom sheet animation
   const sheetAnim = useRef(new Animated.Value(BOTTOM_SHEET_MID)).current;
@@ -336,14 +345,28 @@ export default function MapScreen() {
   // Filtered courts
   const filteredCourts = useMemo(() => {
     return courts.filter((court) => {
+      // Sport filter (quick filter)
       const sportMatch = selectedSport === 'all' || court.sport === selectedSport;
+
+      // Price filter (quick filter)
       const priceMatch =
         selectedPrice === 'all' ||
         (selectedPrice === 'free' && court.is_free) ||
         (selectedPrice === 'paid' && !court.is_free);
-      return sportMatch && priceMatch;
+
+      // Advanced filters
+      const priceInRange = court.is_free
+        ? advancedFilters.includeFree
+        : (court.price_per_hour || 0) >= advancedFilters.priceMin &&
+          (court.price_per_hour || 0) <= advancedFilters.priceMax;
+
+      const advancedSportMatch =
+        advancedFilters.sports.length === 0 ||
+        advancedFilters.sports.some((s) => court.sport?.includes(s));
+
+      return sportMatch && priceMatch && priceInRange && advancedSportMatch;
     });
-  }, [courts, selectedSport, selectedPrice]);
+  }, [courts, selectedSport, selectedPrice, advancedFilters]);
 
   // Courts with valid coordinates
   const courtsWithLocation = useMemo(() => {
@@ -491,15 +514,17 @@ export default function MapScreen() {
 
             {/* Filter Button */}
             <Pressable
-              onPress={() => setShowFilters(!showFilters)}
+              onPress={() => setShowFiltersModal(true)}
               className={`w-12 h-12 rounded-2xl items-center justify-center shadow-sm border ${
-                showFilters ? 'bg-black border-black' : 'bg-white border-neutral-100'
+                advancedFilters.sports.length > 0 || advancedFilters.priceMin > 0 || advancedFilters.priceMax < 200
+                  ? 'bg-black border-black'
+                  : 'bg-white border-neutral-100'
               }`}
             >
               <MaterialIcons
                 name="tune"
                 size={22}
-                color={showFilters ? '#fff' : '#000'}
+                color={advancedFilters.sports.length > 0 || advancedFilters.priceMin > 0 || advancedFilters.priceMax < 200 ? '#fff' : '#000'}
               />
             </Pressable>
           </View>
@@ -731,6 +756,14 @@ export default function MapScreen() {
           </View>
         </View>
       )}
+
+      {/* Filters Modal */}
+      <MapFiltersModal
+        visible={showFiltersModal}
+        onClose={() => setShowFiltersModal(false)}
+        filters={advancedFilters}
+        onApply={setAdvancedFilters}
+      />
     </View>
   );
 }

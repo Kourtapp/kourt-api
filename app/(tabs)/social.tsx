@@ -1,8 +1,8 @@
-import { View, Text, ScrollView, Pressable, Image, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, ActivityIndicator, RefreshControl, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePosts } from '@/hooks/usePosts';
 import { useMatches, useJoinMatch } from '@/hooks';
@@ -15,7 +15,20 @@ export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [joiningMatchId, setJoiningMatchId] = useState<string | null>(null);
+  const [fabOpen, setFabOpen] = useState(false);
+  const fabAnim = useRef(new Animated.Value(0)).current;
   const { profile } = useAuthStore();
+
+  const toggleFab = () => {
+    const toValue = fabOpen ? 0 : 1;
+    Animated.spring(fabAnim, {
+      toValue,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8,
+    }).start();
+    setFabOpen(!fabOpen);
+  };
 
   // Real data hooks
   const { posts, loading: postsLoading, likedPosts, toggleLike, refresh: refreshPosts } = usePosts();
@@ -98,7 +111,7 @@ export default function SocialScreen() {
         <Text className="text-xl font-bold text-black">Social</Text>
         <View className="flex-row gap-2">
           <Pressable
-            onPress={() => router.push('/search' as any)}
+            onPress={() => router.push('/match/search-players' as any)}
             className="w-10 h-10 bg-neutral-100 rounded-full items-center justify-center"
           >
             <MaterialIcons name="search" size={20} color="#000" />
@@ -340,7 +353,7 @@ export default function SocialScreen() {
           <View className="p-5">
             {/* Create Tournament Banner */}
             <Pressable
-              onPress={() => router.push('/tournament/create' as any)}
+              onPress={() => router.push('/tournaments/create' as any)}
               className="mb-4 rounded-2xl overflow-hidden"
             >
               <LinearGradient
@@ -378,6 +391,87 @@ export default function SocialScreen() {
 
         <View className="h-6" />
       </ScrollView>
+
+      {/* FAB Overlay */}
+      {fabOpen && (
+        <Pressable
+          onPress={toggleFab}
+          className="absolute inset-0 bg-black/30"
+        />
+      )}
+
+      {/* FAB Menu */}
+      <View className="absolute bottom-24 right-5">
+        {/* Register Match Option */}
+        <Animated.View
+          style={{
+            opacity: fabAnim,
+            transform: [
+              { translateY: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+              { scale: fabAnim },
+            ],
+          }}
+          className="mb-3"
+        >
+          <Pressable
+            onPress={() => {
+              toggleFab();
+              router.push('/match/register/photos' as any);
+            }}
+            className="flex-row items-center"
+          >
+            <View className="bg-white px-3 py-2 rounded-lg shadow-sm mr-3">
+              <Text className="text-sm font-medium text-black">Registrar Partida</Text>
+            </View>
+            <View className="w-12 h-12 bg-lime-500 rounded-full items-center justify-center shadow-lg">
+              <MaterialIcons name="sports-score" size={24} color="#1A2E05" />
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        {/* Create Game Option */}
+        <Animated.View
+          style={{
+            opacity: fabAnim,
+            transform: [
+              { translateY: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+              { scale: fabAnim },
+            ],
+          }}
+          className="mb-3"
+        >
+          <Pressable
+            onPress={() => {
+              toggleFab();
+              router.push('/match/create' as any);
+            }}
+            className="flex-row items-center"
+          >
+            <View className="bg-white px-3 py-2 rounded-lg shadow-sm mr-3">
+              <Text className="text-sm font-medium text-black">Criar Jogo</Text>
+            </View>
+            <View className="w-12 h-12 bg-black rounded-full items-center justify-center shadow-lg">
+              <MaterialIcons name="add" size={24} color="#fff" />
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        {/* Main FAB */}
+        <Pressable
+          onPress={toggleFab}
+          className="w-14 h-14 bg-black rounded-full items-center justify-center shadow-lg self-end"
+        >
+          <Animated.View
+            style={{
+              transform: [
+                { rotate: fabAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] }) },
+              ],
+            }}
+          >
+            <MaterialIcons name="add" size={28} color="#fff" />
+          </Animated.View>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

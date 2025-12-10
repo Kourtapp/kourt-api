@@ -250,9 +250,21 @@ export default function LiveMatchScreen() {
           onPress: () => {
             setTimerRunning(false);
             setScore((prev) => prev ? { ...prev, status: 'finished', winner_team: winnerTeam } : null);
-            // Navigate to results
+            // Navigate to register match flow (post-game) with match data
             setTimeout(() => {
-              router.push(`/match/${id}` as any);
+              const durationMinutes = Math.round(timer / 60);
+              router.push({
+                pathname: '/match/register/photos',
+                params: {
+                  matchId: id,
+                  duration: durationMinutes.toString(),
+                  sport: matchInfo.sport,
+                  courtName: matchInfo.courtName,
+                  scoreA: score?.team_a_sets.toString() || '0',
+                  scoreB: score?.team_b_sets.toString() || '0',
+                  result: winnerTeam === 'a' ? 'win' : 'loss',
+                },
+              } as any);
             }, 1500);
           },
         },
@@ -577,13 +589,33 @@ export default function LiveMatchScreen() {
         {/* Finished State */}
         {score?.status === 'finished' && (
           <View className="px-5 pb-4">
-            <View className="bg-lime-50 border border-lime-200 rounded-2xl p-4 items-center">
+            <View className="bg-lime-50 border border-lime-200 rounded-2xl p-4 items-center mb-3">
               <MaterialIcons name="emoji-events" size={40} color="#84CC16" />
               <Text className="text-lime-700 font-bold text-lg mt-2">Partida Finalizada!</Text>
               <Text className="text-lime-600 mt-1">
                 Vencedor: Time {score.winner_team?.toUpperCase()}
               </Text>
             </View>
+            <Pressable
+              onPress={() => {
+                const durationMinutes = Math.round(timer / 60);
+                router.push({
+                  pathname: '/match/register/photos',
+                  params: {
+                    matchId: id,
+                    duration: durationMinutes.toString(),
+                    sport: matchInfo.sport,
+                    courtName: matchInfo.courtName,
+                    scoreA: score?.team_a_sets.toString() || '0',
+                    scoreB: score?.team_b_sets.toString() || '0',
+                    result: score.winner_team === 'a' ? 'win' : 'loss',
+                  },
+                } as any);
+              }}
+              className="bg-black py-4 rounded-full items-center"
+            >
+              <Text className="text-white font-bold">Registrar Partida</Text>
+            </Pressable>
           </View>
         )}
       </View>

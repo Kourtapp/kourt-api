@@ -292,7 +292,7 @@ export default function ProfileScreen() {
             {/* Referral Banner */}
             {FEATURES.REFERRALS && (
               <Pressable
-                onPress={() => router.push('/referrals' as any)}
+                onPress={() => router.push('/profile/referral' as any)}
                 className="mb-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 flex-row items-center"
                 style={{ backgroundColor: '#22C55E' }}
               >
@@ -310,12 +310,14 @@ export default function ProfileScreen() {
             {/* Activities Menu */}
             <View className="bg-white rounded-2xl border border-neutral-100">
               {[
-                { icon: 'event', label: 'Activities', subtitle: 'Today', route: '/history' },
-                { icon: 'bar-chart', label: 'Statistics', subtitle: `This year: ${totalMatches} partidas`, route: '/statistics' },
-                { icon: 'notifications', label: 'Notificacoes', subtitle: 'Configurar alertas', route: '/notification-settings' },
-                { icon: 'help', label: 'Ajuda', subtitle: 'FAQ e suporte', route: '/help' },
-                { icon: 'article', label: 'Posts', subtitle: '112', route: '/posts' },
+                { icon: 'event', label: 'Atividades', subtitle: 'Hoje', route: '/profile/activities' },
+                { icon: 'bar-chart', label: 'Estatísticas', subtitle: `Este ano: ${totalMatches} partidas`, route: '/profile/statistics' },
+                { icon: 'place', label: 'Quadras Favoritas', subtitle: '15 quadras', route: '/quadras-favoritas' },
                 { icon: 'sports-tennis', label: 'Gear', subtitle: 'Drop Shot Conqueror 12', route: '/gear' },
+                { icon: 'emoji-events', label: 'Conquistas', subtitle: '24 conquistas', route: '/profile/achievements' },
+                { icon: 'flag', label: 'Desafios', subtitle: '3 em progresso', route: '/profile/challenges' },
+                { icon: 'emoji-events', label: 'Torneios', subtitle: 'PRO', route: '/tournaments' },
+                { icon: 'chat', label: 'Mensagens', subtitle: '2 não lidas', route: '/chat' },
               ].map((item, index) => (
                 <Pressable
                   key={item.label}
@@ -367,7 +369,7 @@ export default function ProfileScreen() {
                   </View>
                 </ScrollView>
                 <Pressable
-                  onPress={() => router.push('/achievements' as any)}
+                  onPress={() => router.push('/profile/achievements' as any)}
                   className="mt-4"
                 >
                   <Text className="text-sm text-neutral-500">All trophies →</Text>

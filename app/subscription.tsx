@@ -101,11 +101,11 @@ export default function SubscriptionScreen() {
 
   // Theme colors based on selected plan
   const isPlanPro = selectedPlan === 'pro';
-  const bgColor = isPlanPro ? 'bg-[#0a0a0a]' : 'bg-white';
+  const bgColor = isPlanPro ? 'bg-[#0a0a0a]' : 'bg-[#f0fdf4]'; // Verde claro para Plus
   const textColor = isPlanPro ? 'text-white' : 'text-gray-900';
-  const textMutedColor = isPlanPro ? 'text-gray-400' : 'text-gray-500';
-  const borderColor = isPlanPro ? 'border-gray-800' : 'border-gray-200';
-  const cardBgColor = isPlanPro ? 'bg-[#1a1a1a]' : 'bg-gray-50';
+  const textMutedColor = isPlanPro ? 'text-gray-400' : 'text-gray-600';
+  const borderColor = isPlanPro ? 'border-gray-800' : 'border-green-200';
+  const cardBgColor = isPlanPro ? 'bg-[#1a1a1a]' : 'bg-white';
 
   // Current plan features
   const features = isPlanPro ? proFeatures : plusFeatures;
@@ -224,7 +224,7 @@ export default function SubscriptionScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-6">
           {/* Illustration Box */}
-          <View className={`rounded-2xl p-8 mb-8 border-2 border-dashed relative overflow-hidden ${isPlanPro ? 'border-gray-700 bg-[#111]' : 'border-gray-200 bg-gray-50'
+          <View className={`rounded-2xl p-8 mb-8 border-2 border-dashed relative overflow-hidden ${isPlanPro ? 'border-gray-700 bg-[#111]' : 'border-green-200 bg-white'
             }`}>
             {/* Decorative elements */}
             <View className={`absolute top-5 right-7 w-10 h-10 rounded-lg ${isPlanPro ? 'bg-[#d4af37]' : 'bg-gray-900'}`} />
@@ -334,10 +334,10 @@ export default function SubscriptionScreen() {
               className={`flex-1 p-4 rounded-2xl border-2 relative ${billingPeriod === 'yearly'
                 ? isPlanPro
                   ? 'border-[#d4af37] bg-[#1a1a1a]'
-                  : 'border-gray-900 bg-gray-50'
+                  : 'border-lime-500 bg-white'
                 : isPlanPro
                   ? 'border-gray-700 bg-[#111]'
-                  : 'border-gray-200 bg-white'
+                  : 'border-green-200 bg-white'
                 }`}
             >
               {/* Savings Badge */}
@@ -357,10 +357,10 @@ export default function SubscriptionScreen() {
               <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${billingPeriod === 'yearly'
                 ? isPlanPro
                   ? 'border-[#d4af37] bg-[#d4af37]'
-                  : 'border-gray-900 bg-gray-900'
+                  : 'border-lime-500 bg-lime-500'
                 : isPlanPro
                   ? 'border-gray-600'
-                  : 'border-gray-300'
+                  : 'border-green-300'
                 }`}>
                 {billingPeriod === 'yearly' && (
                   <View className={`w-2 h-2 rounded-full ${isPlanPro ? 'bg-[#0a0a0a]' : 'bg-white'}`} />
@@ -385,20 +385,20 @@ export default function SubscriptionScreen() {
               className={`flex-1 p-4 rounded-2xl border-2 relative ${billingPeriod === 'monthly'
                 ? isPlanPro
                   ? 'border-[#d4af37] bg-[#1a1a1a]'
-                  : 'border-gray-900 bg-gray-50'
+                  : 'border-lime-500 bg-white'
                 : isPlanPro
                   ? 'border-gray-700 bg-[#111]'
-                  : 'border-gray-200 bg-white'
+                  : 'border-green-200 bg-white'
                 }`}
             >
               {/* Radio */}
               <View className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 items-center justify-center ${billingPeriod === 'monthly'
                 ? isPlanPro
                   ? 'border-[#d4af37] bg-[#d4af37]'
-                  : 'border-gray-900 bg-gray-900'
+                  : 'border-lime-500 bg-lime-500'
                 : isPlanPro
                   ? 'border-gray-600'
-                  : 'border-gray-300'
+                  : 'border-green-300'
                 }`}>
                 {billingPeriod === 'monthly' && (
                   <View className={`w-2 h-2 rounded-full ${isPlanPro ? 'bg-[#0a0a0a]' : 'bg-white'}`} />

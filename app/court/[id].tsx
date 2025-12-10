@@ -175,11 +175,15 @@ export default function CourtDetailScreen() {
               </View>
               <Pressable
                 onPress={() =>
-                  router.push(`/booking/checkout?courtId=${id}` as any)
+                  court.is_free
+                    ? router.push(`/match/create?courtId=${id}` as any)
+                    : router.push(`/court/${id}/schedule` as any)
                 }
                 className="px-6 py-3 bg-lime-500 rounded-xl"
               >
-                <Text className="font-semibold text-lime-950">Reservar</Text>
+                <Text className="font-semibold text-lime-950">
+                  {court.is_free ? 'Criar Jogo' : 'Reservar'}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -253,7 +257,7 @@ export default function CourtDetailScreen() {
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-base font-bold text-black">Avaliações</Text>
-              <Pressable>
+              <Pressable onPress={() => router.push(`/court/${id}/reviews` as any)}>
                 <Text className="text-sm text-neutral-500">
                   Ver todas ({reviews.length})
                 </Text>
@@ -312,12 +316,16 @@ export default function CourtDetailScreen() {
       {/* Fixed Bottom CTA */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-5 py-4 pb-8">
         <Pressable
-          onPress={() => router.push(`/booking/checkout?courtId=${id}` as any)}
-          className="w-full py-4 bg-black rounded-2xl flex-row items-center justify-center"
+          onPress={() =>
+            court.is_free
+              ? router.push(`/match/create?courtId=${id}` as any)
+              : router.push(`/court/${id}/schedule` as any)
+          }
+          className="w-full py-4 bg-black rounded-full flex-row items-center justify-center"
         >
           <MaterialIcons name="event" size={20} color="#FFF" />
           <Text className="text-white font-semibold text-[15px] ml-2">
-            Reservar Agora
+            {court.is_free ? 'Criar Jogo Aqui' : 'Reservar Agora'}
           </Text>
         </Pressable>
       </View>
