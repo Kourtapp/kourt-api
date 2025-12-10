@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "kourt",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -21,9 +21,6 @@
       "bundleIdentifier": "com.kourt.app",
       "buildNumber": "1",
       "usesAppleSignIn": true,
-      "config": {
-        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
-      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Kourt usa sua localização para mostrar quadras próximas.",
         "NSCameraUsageDescription": "Kourt usa a câmera para adicionar fotos de partidas.",
