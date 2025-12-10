@@ -66,44 +66,63 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppContent() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="dark" />
+      <AuthGuard>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="chat" />
+          <Stack.Screen name="subscription" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="tournaments" />
+          <Stack.Screen name="booking" />
+          <Stack.Screen name="admin" />
+        </Stack>
+      </AuthGuard>
+    </GestureHandlerRootView>
+  );
+}
+
 export default function RootLayout() {
   const { initialize } = useAuthStore();
 
+  // Initialize auth - empty dependency array to run only once
   useEffect(() => {
     initialize();
-  }, [initialize]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Request location permission with error handling
   useEffect(() => {
     const requestLocationPermission = async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        await Location.requestForegroundPermissionsAsync();
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          await Location.requestForegroundPermissionsAsync();
+        }
+      } catch (error) {
+        console.error('Error requesting location permission:', error);
+        // Don't crash if location permission fails
       }
     };
     requestLocationPermission();
   }, []);
 
-  return (
-    <StripeProvider
-      publishableKey={STRIPE_PUBLISHABLE_KEY}
-      merchantIdentifier="merchant.com.kourt"
-    >
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="dark" />
-        <AuthGuard>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="chat" />
-            <Stack.Screen name="subscription" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="tournaments" />
-            <Stack.Screen name="booking" />
-            <Stack.Screen name="admin" />
-          </Stack>
-        </AuthGuard>
-      </GestureHandlerRootView>
-    </StripeProvider>
-  );
+  // Only wrap with StripeProvider if we have a valid key
+  if (STRIPE_PUBLISHABLE_KEY) {
+    return (
+      <StripeProvider
+        publishableKey={STRIPE_PUBLISHABLE_KEY}
+        merchantIdentifier="merchant.com.kourt"
+      >
+        <AppContent />
+      </StripeProvider>
+    );
+  }
+
+  // Fallback without Stripe (for development or if key is missing)
+  return <AppContent />;
 }

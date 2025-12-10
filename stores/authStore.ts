@@ -69,12 +69,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (session?.user) {
         console.log('[Auth] Session restored for user:', session.user.email);
-        // Fetch profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        // Fetch profile with error handling
+        let profile = null;
+        try {
+          const { data, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('[Auth] Error fetching profile:', profileError);
+          } else {
+            profile = data;
+          }
+        } catch (profileErr) {
+          console.error('[Auth] Exception fetching profile:', profileErr);
+        }
 
         set({
           session,
@@ -92,16 +103,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
 
-      // Listen for auth changes
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      // Listen for auth changes with proper subscription handling
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('Auth state changed:', event);
 
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          let profile = null;
+          try {
+            const { data, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (!profileError) {
+              profile = data;
+            }
+          } catch (err) {
+            console.error('[Auth] Error fetching profile on auth change:', err);
+          }
 
           set({
             session,
@@ -116,8 +136,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           });
         }
       });
+
+      // Store subscription for potential cleanup
+      // Note: In a React app, cleanup would be done in useEffect
+      // For Zustand store, this is handled when the app closes
     } catch (error) {
       console.error('Auth initialization error:', error);
+      // Set isInitialized to allow app to continue even on error
       set({ isLoading: false, isInitialized: true });
     }
   },

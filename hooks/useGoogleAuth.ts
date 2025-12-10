@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -6,16 +6,22 @@ import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
-// Necessário para o redirect funcionar corretamente
-WebBrowser.maybeCompleteAuthSession();
-
 // IDs do Google Cloud Console - Substituir pelos seus
-const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || '';
-const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || '';
-const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || '';
+const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || undefined;
+const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || undefined;
+const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || undefined;
 
 export function useGoogleAuth() {
   const { refreshProfile } = useAuthStore();
+  const authSessionCompleted = useRef(false);
+
+  // Mover para dentro do hook para evitar execução no escopo do módulo
+  useEffect(() => {
+    if (!authSessionCompleted.current) {
+      WebBrowser.maybeCompleteAuthSession();
+      authSessionCompleted.current = true;
+    }
+  }, []);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_CLIENT_ID_WEB,

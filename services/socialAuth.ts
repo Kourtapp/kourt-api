@@ -2,13 +2,11 @@
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 
 import { supabase } from '@/lib/supabase';
 
-// Completar auth session para web
-WebBrowser.maybeCompleteAuthSession();
+// REMOVIDO: WebBrowser.maybeCompleteAuthSession() - movido para useGoogleAuth hook
 
 // Configurações
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
