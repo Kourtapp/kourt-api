@@ -1,15 +1,31 @@
 // components/coach-marks/CoachOverlay.tsx
 import { View, Text, Pressable, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { useEffect } from 'react';
+
+// Import Reanimated conditionally
+let Animated: any = { View };
+let FadeIn: any = { duration: () => undefined };
+let FadeOut: any = { duration: () => undefined };
+let useAnimatedStyle: any = () => ({});
+let useSharedValue: any = () => ({ value: 1 });
+let withRepeat: any = (x: any) => x;
+let withTiming: any = (x: any) => x;
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  FadeIn = Reanimated.FadeIn;
+  FadeOut = Reanimated.FadeOut;
+  useAnimatedStyle = Reanimated.useAnimatedStyle;
+  useSharedValue = Reanimated.useSharedValue;
+  withRepeat = Reanimated.withRepeat;
+  withTiming = Reanimated.withTiming;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[CoachOverlay] Reanimated not available');
+}
 
 import { useCoachStore } from '@/stores/useCoachStore';
 import { COACH_MARKS } from '@/constants/coachMarks';
@@ -63,10 +79,14 @@ export function CoachOverlay({ screen }: CoachOverlayProps) {
     }
   };
 
+  // Conditional animations
+  const enteringAnim = IS_REANIMATED_AVAILABLE ? FadeIn.duration(200) : undefined;
+  const exitingAnim = IS_REANIMATED_AVAILABLE ? FadeOut.duration(200) : undefined;
+
   return (
     <Animated.View
-      entering={FadeIn.duration(200)}
-      exiting={FadeOut.duration(200)}
+      entering={enteringAnim}
+      exiting={exitingAnim}
       className="absolute inset-0 z-50"
       pointerEvents="box-none"
     >

@@ -6,17 +6,34 @@ import {
   Pressable,
   Dimensions,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
 import Svg, { Circle, Path, Line, Rect, Polyline } from 'react-native-svg';
 import { router } from 'expo-router';
+
+// Import Reanimated conditionally
+let Animated: any = { View };
+let useSharedValue: any = () => ({ value: 0 });
+let useAnimatedStyle: any = () => ({});
+let withRepeat: any = (x: any) => x;
+let withTiming: any = (x: any) => x;
+let withSequence: any = (...args: any[]) => args[0];
+let withDelay: any = (_d: any, x: any) => x;
+let Easing: any = { inOut: () => (x: any) => x, ease: {} };
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  useSharedValue = Reanimated.useSharedValue;
+  useAnimatedStyle = Reanimated.useAnimatedStyle;
+  withRepeat = Reanimated.withRepeat;
+  withTiming = Reanimated.withTiming;
+  withSequence = Reanimated.withSequence;
+  withDelay = Reanimated.withDelay;
+  Easing = Reanimated.Easing;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[KourtHostBanner] Reanimated not available');
+}
 
 const { width } = Dimensions.get('window');
 

@@ -5,19 +5,37 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  withDelay,
-  Easing,
-  interpolate,
-} from 'react-native-reanimated';
 import Svg, { Circle, Path, Line, Polyline } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+
+// Import Reanimated conditionally
+let Animated: any = { View };
+let useSharedValue: any = () => ({ value: 0 });
+let useAnimatedStyle: any = () => ({});
+let withRepeat: any = (x: any) => x;
+let withTiming: any = (x: any) => x;
+let withSequence: any = (...args: any[]) => args[0];
+let withDelay: any = (_d: any, x: any) => x;
+let Easing: any = { inOut: () => (x: any) => x, ease: {} };
+let interpolate: any = (_v: any, _i: any, o: any) => o[0];
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  useSharedValue = Reanimated.useSharedValue;
+  useAnimatedStyle = Reanimated.useAnimatedStyle;
+  withRepeat = Reanimated.withRepeat;
+  withTiming = Reanimated.withTiming;
+  withSequence = Reanimated.withSequence;
+  withDelay = Reanimated.withDelay;
+  Easing = Reanimated.Easing;
+  interpolate = Reanimated.interpolate;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[SejaHostCard] Reanimated not available');
+}
 
 // Ícone SVG como componente
 const StoreIcon = () => (

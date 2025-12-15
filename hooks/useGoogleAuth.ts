@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Alert, Platform } from 'react-native';
-import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -12,39 +11,57 @@ const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || '';
 const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || '';
 
 // Verificar se o Google Auth está configurado para a plataforma atual
-const isGoogleConfigured = () => {
+const checkGoogleConfigured = () => {
   if (Platform.OS === 'ios') return !!GOOGLE_CLIENT_ID_IOS;
   if (Platform.OS === 'android') return !!GOOGLE_CLIENT_ID_ANDROID;
   return !!GOOGLE_CLIENT_ID_WEB;
 };
 
+const IS_GOOGLE_CONFIGURED = checkGoogleConfigured();
+
+// Import Google auth conditionally to avoid crash when not configured
+let useGoogleAuthRequest: any = null;
+if (IS_GOOGLE_CONFIGURED) {
+  try {
+    const Google = require('expo-auth-session/providers/google');
+    useGoogleAuthRequest = Google.useAuthRequest;
+  } catch (e) {
+    console.log('[GoogleAuth] Failed to load expo-auth-session:', e);
+  }
+}
+
 export function useGoogleAuth() {
   const { refreshProfile } = useAuthStore();
   const authSessionCompleted = useRef(false);
-  const [isConfigured] = useState(isGoogleConfigured());
 
   // Mover para dentro do hook para evitar execução no escopo do módulo
   useEffect(() => {
-    if (!authSessionCompleted.current && isConfigured) {
+    if (!authSessionCompleted.current && IS_GOOGLE_CONFIGURED) {
       WebBrowser.maybeCompleteAuthSession();
       authSessionCompleted.current = true;
     }
-  }, [isConfigured]);
+  }, []);
 
-  // Configurar o request - o hook precisa ser chamado sempre (regra dos hooks)
-  // Quando não configurado, usar placeholders para evitar crash
-  const authConfig = isConfigured ? {
+  // Se não configurado, retornar valores padrão sem chamar o hook do Google
+  if (!IS_GOOGLE_CONFIGURED || !useGoogleAuthRequest) {
+    return {
+      signInWithGoogle: async () => {
+        Alert.alert(
+          'Google Auth não disponível',
+          'Login com Google não está configurado para esta plataforma.'
+        );
+      },
+      isGoogleReady: false,
+      isGoogleConfigured: false,
+    };
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [request, response, promptAsync] = useGoogleAuthRequest({
     webClientId: GOOGLE_CLIENT_ID_WEB || undefined,
     iosClientId: GOOGLE_CLIENT_ID_IOS || undefined,
     androidClientId: GOOGLE_CLIENT_ID_ANDROID || undefined,
-  } : {
-    // Placeholders para evitar crash - o hook não será usado de fato
-    webClientId: 'not-configured',
-    iosClientId: Platform.OS === 'ios' ? 'not-configured' : undefined,
-    androidClientId: Platform.OS === 'android' ? 'not-configured' : undefined,
-  };
-
-  const [request, response, promptAsync] = Google.useAuthRequest(authConfig);
+  });
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -112,14 +129,6 @@ export function useGoogleAuth() {
   };
 
   const signInWithGoogle = async () => {
-    if (!isConfigured) {
-      Alert.alert(
-        'Google Auth não disponível',
-        'Login com Google não está configurado para esta plataforma.'
-      );
-      return;
-    }
-
     if (!request) {
       Alert.alert(
         'Aguarde',
@@ -133,7 +142,7 @@ export function useGoogleAuth() {
 
   return {
     signInWithGoogle,
-    isGoogleReady: isConfigured && !!request,
-    isGoogleConfigured: isConfigured,
+    isGoogleReady: !!request,
+    isGoogleConfigured: true,
   };
 }

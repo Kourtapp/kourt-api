@@ -1,6 +1,13 @@
 import { supabase } from '@/lib/supabase';
-import { File } from 'expo-file-system/next';
 import { decode } from 'base64-arraybuffer';
+
+// Import FileSystem conditionally to avoid crash in development builds
+let FileClass: any = null;
+try {
+  FileClass = require('expo-file-system/next').File;
+} catch (e) {
+  console.log('[Storage] expo-file-system not available');
+}
 
 // Helper to convert ArrayBuffer to Base64
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -18,8 +25,13 @@ export const storageService = {
    */
   async uploadAvatar(userId: string, imageUri: string): Promise<string | null> {
     try {
+      if (!FileClass) {
+        console.error('[Storage] FileSystem not available - cannot upload avatar');
+        return null;
+      }
+
       // Read file using new File API
-      const file = new File(imageUri);
+      const file = new FileClass(imageUri);
       const arrayBuffer = await file.arrayBuffer();
       const base64 = arrayBufferToBase64(arrayBuffer);
 
@@ -90,8 +102,13 @@ export const storageService = {
     imageUri: string
   ): Promise<string | null> {
     try {
+      if (!FileClass) {
+        console.error('[Storage] FileSystem not available - cannot upload image');
+        return null;
+      }
+
       // Read file using new File API
-      const file = new File(imageUri);
+      const file = new FileClass(imageUri);
       const arrayBuffer = await file.arrayBuffer();
       const base64 = arrayBufferToBase64(arrayBuffer);
 

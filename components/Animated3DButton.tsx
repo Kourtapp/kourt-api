@@ -1,15 +1,32 @@
-import { Pressable, Text, View, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import { Pressable, Text, View, StyleSheet, Animated as RNAnimated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+// Import Reanimated conditionally
+let Animated: any = RNAnimated;
+let useSharedValue: any = () => ({ value: 0 });
+let useAnimatedStyle: any = () => ({});
+let withSpring: any = (x: any) => x;
+let withTiming: any = (x: any) => x;
+let interpolate: any = (_v: any, _i: any, o: any) => o[0];
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  useSharedValue = Reanimated.useSharedValue;
+  useAnimatedStyle = Reanimated.useAnimatedStyle;
+  withSpring = Reanimated.withSpring;
+  withTiming = Reanimated.withTiming;
+  interpolate = Reanimated.interpolate;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[Animated3DButton] Reanimated not available');
+}
+
+const AnimatedPressable = IS_REANIMATED_AVAILABLE
+  ? Animated.createAnimatedComponent(Pressable)
+  : Pressable;
 
 interface Animated3DButtonProps {
   onPress: () => void;

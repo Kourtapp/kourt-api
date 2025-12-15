@@ -5,11 +5,18 @@ import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { useAuthStore } from '@/stores/authStore';
-import { StripeProvider } from '@stripe/stripe-react-native';
 import '../global.css';
 
 // Stripe Publishable Key from environment variables
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+
+// Import Stripe conditionally to avoid crash in development builds without native modules
+let StripeProvider: any = null;
+try {
+  StripeProvider = require('@stripe/stripe-react-native').StripeProvider;
+} catch (e) {
+  console.log('[Stripe] Native module not available - running without Stripe');
+}
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, isInitialized } = useAuthStore();
@@ -111,8 +118,8 @@ export default function RootLayout() {
     requestLocationPermission();
   }, []);
 
-  // Only wrap with StripeProvider if we have a valid key
-  if (STRIPE_PUBLISHABLE_KEY) {
+  // Only wrap with StripeProvider if available and configured
+  if (StripeProvider && STRIPE_PUBLISHABLE_KEY) {
     return (
       <StripeProvider
         publishableKey={STRIPE_PUBLISHABLE_KEY}
@@ -123,6 +130,6 @@ export default function RootLayout() {
     );
   }
 
-  // Fallback without Stripe (for development or if key is missing)
+  // Fallback without Stripe (for development builds or if key is missing)
   return <AppContent />;
 }

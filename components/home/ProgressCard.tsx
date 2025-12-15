@@ -1,7 +1,20 @@
 // components/home/ProgressCard.tsx
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Animated as RNAnimated } from 'react-native';
 import { router } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+
+// Import Reanimated conditionally
+let Animated: any = { View };
+let FadeInDown: any = null;
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  FadeInDown = Reanimated.FadeInDown;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[ProgressCard] Reanimated not available');
+}
 
 interface ProgressCardProps {
   xp: number;
@@ -23,8 +36,13 @@ export function ProgressCard({
   const xpProgress = (xp / xpToNextLevel) * 100;
   const xpRemaining = xpToNextLevel - xp;
 
+  // Use static View when reanimated is not available
+  const enteringAnimation = IS_REANIMATED_AVAILABLE && FadeInDown
+    ? FadeInDown.delay(200).duration(400)
+    : undefined;
+
   return (
-    <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+    <Animated.View entering={enteringAnimation}>
       <Pressable
         onPress={() => router.push('/(tabs)/profile')}
         className="mx-5 bg-black rounded-3xl p-5 overflow-hidden"

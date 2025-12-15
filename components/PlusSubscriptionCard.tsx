@@ -1,15 +1,31 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated as RNAnimated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+
+// Import Reanimated conditionally to avoid crash in development builds
+let Animated: any = RNAnimated;
+let useSharedValue: any = null;
+let useAnimatedStyle: any = null;
+let withRepeat: any = null;
+let withSequence: any = null;
+let withTiming: any = null;
+let Easing: any = null;
+let IS_REANIMATED_AVAILABLE = false;
+
+try {
+  const Reanimated = require('react-native-reanimated');
+  Animated = Reanimated.default;
+  useSharedValue = Reanimated.useSharedValue;
+  useAnimatedStyle = Reanimated.useAnimatedStyle;
+  withRepeat = Reanimated.withRepeat;
+  withSequence = Reanimated.withSequence;
+  withTiming = Reanimated.withTiming;
+  Easing = Reanimated.Easing;
+  IS_REANIMATED_AVAILABLE = true;
+} catch (e) {
+  console.log('[PlusSubscriptionCard] Reanimated not available - using static version');
+}
 
 const { width } = Dimensions.get('window');
 
@@ -55,12 +71,15 @@ interface PlusSubscriptionCardProps {
 }
 
 export const PlusSubscriptionCard: React.FC<PlusSubscriptionCardProps> = ({ onPress }) => {
-  const lightningScale = useSharedValue(1);
-  const lightningGlow = useSharedValue(0.3);
-  const arrowX = useSharedValue(0);
-  const shimmerX = useSharedValue(-width);
+  // Use reanimated if available, otherwise fallback to static view
+  const lightningScale = IS_REANIMATED_AVAILABLE ? useSharedValue(1) : { value: 1 };
+  const lightningGlow = IS_REANIMATED_AVAILABLE ? useSharedValue(0.3) : { value: 0.3 };
+  const arrowX = IS_REANIMATED_AVAILABLE ? useSharedValue(0) : { value: 0 };
+  const shimmerX = IS_REANIMATED_AVAILABLE ? useSharedValue(-width) : { value: -width };
 
   useEffect(() => {
+    if (!IS_REANIMATED_AVAILABLE) return;
+
     // Lightning pulse
     lightningScale.value = withRepeat(
       withSequence(
@@ -95,21 +114,22 @@ export const PlusSubscriptionCard: React.FC<PlusSubscriptionCardProps> = ({ onPr
     );
   }, []);
 
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: lightningScale.value }],
-  }));
+  // Static styles when reanimated is not available
+  const iconStyle = IS_REANIMATED_AVAILABLE
+    ? useAnimatedStyle(() => ({ transform: [{ scale: lightningScale.value }] }))
+    : { transform: [{ scale: 1 }] };
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: lightningGlow.value,
-  }));
+  const glowStyle = IS_REANIMATED_AVAILABLE
+    ? useAnimatedStyle(() => ({ opacity: lightningGlow.value }))
+    : { opacity: 0.3 };
 
-  const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: arrowX.value }],
-  }));
+  const arrowStyle = IS_REANIMATED_AVAILABLE
+    ? useAnimatedStyle(() => ({ transform: [{ translateX: arrowX.value }] }))
+    : { transform: [{ translateX: 0 }] };
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shimmerX.value }],
-  }));
+  const shimmerStyle = IS_REANIMATED_AVAILABLE
+    ? useAnimatedStyle(() => ({ transform: [{ translateX: shimmerX.value }] }))
+    : { transform: [{ translateX: -width }] };
 
   return (
     <TouchableOpacity activeOpacity={0.95} onPress={onPress} style={styles.container}>
