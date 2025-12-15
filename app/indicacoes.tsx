@@ -61,8 +61,7 @@ export default function IndicacoesScreen() {
             colors={['#22C55E', '#16A34A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ borderRadius: 24 }}
-            className="p-5"
+            style={{ borderRadius: 24, padding: 20 }}
           >
             <View className="flex-row items-center gap-3 mb-4">
               <View className="w-10 h-10 bg-white/20 rounded-xl items-center justify-center">

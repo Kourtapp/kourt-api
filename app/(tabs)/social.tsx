@@ -360,7 +360,7 @@ export default function SocialScreen() {
                 colors={['#171717', '#262626']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                className="p-4 flex-row items-center"
+                style={{ padding: 16, flexDirection: 'row', alignItems: 'center' }}
               >
                 <View className="w-12 h-12 bg-amber-500/20 rounded-xl items-center justify-center">
                   <MaterialIcons name="emoji-events" size={24} color="#F59E0B" />

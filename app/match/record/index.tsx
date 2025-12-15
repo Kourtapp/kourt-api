@@ -711,7 +711,7 @@ export default function RecordMatchScreen() {
         colors={['#EC4899', '#F472B6']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        className="rounded-2xl p-4 mb-6"
+        style={{ borderRadius: 16, padding: 16, marginBottom: 24 }}
       >
         <View className="flex-row items-center mb-4">
           <View className="w-10 h-10 bg-white/20 rounded-xl items-center justify-center">

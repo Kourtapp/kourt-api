@@ -155,7 +155,7 @@ export default function ChallengesScreen() {
           colors={['#38BDF8', '#0EA5E9', '#0284C7']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="p-5 rounded-2xl"
+          style={{ padding: 20, borderRadius: 16 }}
         >
           <View className="flex-row items-center gap-3 mb-4">
             <View className="w-12 h-12 bg-white/20 rounded-xl items-center justify-center">

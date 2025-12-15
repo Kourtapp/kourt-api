@@ -131,7 +131,7 @@ export default function CheckinSuccessScreen() {
             colors={['#22C55E', '#16A34A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="rounded-xl py-4 flex-row items-center justify-center"
+            style={{ borderRadius: 12, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
           >
             <MaterialIcons name="play-arrow" size={24} color="#fff" />
             <Text className="text-white font-semibold text-base ml-2">

@@ -117,8 +117,7 @@ export default function ConquistasScreen() {
                 colors={achievement.gradient as [string, string]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={{ borderRadius: 16 }}
-                className="p-4 flex-row items-center"
+                style={{ borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center' }}
               >
                 <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center mr-4">
                   <MaterialIcons name={achievement.icon as any} size={32} color="#fff" />

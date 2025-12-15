@@ -318,7 +318,7 @@ export default function SaveMatchScreen() {
             colors={['#22C55E', '#16A34A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="rounded-xl py-4 items-center"
+            style={{ borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
           >
             <Text className="text-white font-semibold text-base">Salvar Partida</Text>
           </LinearGradient>

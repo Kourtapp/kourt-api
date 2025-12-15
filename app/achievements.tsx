@@ -154,7 +154,10 @@ export default function AchievementsScreen() {
       <View className="mx-4 mt-4">
         <LinearGradient
           colors={['#1F2937', '#111827']}
-          className="p-5 rounded-2xl"
+          style={{
+            padding: 20,
+            borderRadius: 16,
+          }}
         >
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-4">
@@ -182,8 +185,11 @@ export default function AchievementsScreen() {
               colors={['#22C55E', '#16A34A']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="h-full rounded-full"
-              style={{ width: `${(gamification.xp / gamification.xpToNext) * 100}%` }}
+              style={{
+                height: '100%',
+                borderRadius: 9999,
+                width: `${(gamification.xp / gamification.xpToNext) * 100}%`,
+              }}
             />
           </View>
 

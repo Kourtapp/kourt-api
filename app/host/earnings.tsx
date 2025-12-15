@@ -164,7 +164,12 @@ export default function HostEarningsScreen() {
         {/* Balance Card */}
         <LinearGradient
           colors={['#222222', '#3D3D3D']}
-          className="mx-4 mt-4 rounded-2xl p-6"
+          style={{
+            marginHorizontal: 16,
+            marginTop: 16,
+            borderRadius: 16,
+            padding: 24,
+          }}
         >
           <Text className="text-white/60 text-sm font-medium mb-1">Saldo Disponivel</Text>
           <Text className="text-white text-4xl font-bold mb-4">

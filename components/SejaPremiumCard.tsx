@@ -14,7 +14,7 @@ export default function SejaPremiumCard() {
                 colors={['#0a0a0a', '#1a1a1a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="p-5 flex-row items-center border border-neutral-800"
+                style={{ padding: 20, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#262626' }}
             >
                 {/* Left Icon with Glow */}
                 <View className="mr-4">

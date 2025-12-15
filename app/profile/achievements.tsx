@@ -184,7 +184,7 @@ export default function AchievementsScreen() {
                     colors={getRarityColors(achievement.rarity)}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    className="p-4"
+                    style={{ padding: 16 }}
                   >
                     <View className="flex-row items-center">
                       <View className="w-14 h-14 bg-white/20 rounded-xl items-center justify-center">

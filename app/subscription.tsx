@@ -127,7 +127,14 @@ export default function SubscriptionScreen() {
         <View className="flex-1 items-center justify-center px-6">
           <LinearGradient
             colors={isPro ? ['#d4af37', '#f4e4a6', '#d4af37'] : ['#84cc16', '#22c55e']}
-            className="w-20 h-20 rounded-2xl items-center justify-center mb-4"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 16,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
           >
             <MaterialIcons name={isPro ? "workspace-premium" : "verified"} size={40} color="#fff" />
           </LinearGradient>
@@ -206,8 +213,14 @@ export default function SubscriptionScreen() {
               colors={['#d4af37', '#f4e4a6', '#d4af37']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="absolute inset-0 rounded-xl"
-              style={{ borderRadius: 12 }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                borderRadius: 12,
+              }}
             />
           ) : null}
           <Text className={`text-xs font-semibold uppercase tracking-wide ${selectedPlan === 'pro' ? 'text-[#0a0a0a]' : textMutedColor
@@ -440,7 +453,11 @@ export default function SubscriptionScreen() {
               colors={['#d4af37', '#f4e4a6', '#d4af37']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="py-4 rounded-2xl items-center"
+              style={{
+                paddingVertical: 16,
+                borderRadius: 16,
+                alignItems: 'center',
+              }}
             >
               {loading ? (
                 <ActivityIndicator color="#0a0a0a" />

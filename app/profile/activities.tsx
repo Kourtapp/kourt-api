@@ -158,7 +158,7 @@ export default function ActivitiesScreen() {
                     colors={activity.result === 'win' ? ['#22C55E', '#16A34A'] : ['#EF4444', '#DC2626']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    className="p-4"
+                    style={{ padding: 16 }}
                   >
                     <View className="flex-row items-center justify-between mb-2">
                       <View className="flex-row items-center gap-2">

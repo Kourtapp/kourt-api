@@ -160,8 +160,7 @@ export default function ActivitiesScreen() {
                   colors={activity.result === 'win' ? ['#22C55E', '#16A34A'] : ['#EF4444', '#DC2626']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={{ borderRadius: 20 }}
-                  className="p-4"
+                  style={{ borderRadius: 20, padding: 16 }}
                 >
                   <View className="flex-row items-center justify-between mb-2">
                     <View className="bg-white/20 px-3 py-1 rounded-full flex-row items-center gap-1">

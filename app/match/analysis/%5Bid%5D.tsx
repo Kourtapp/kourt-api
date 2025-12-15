@@ -99,11 +99,11 @@ export default function MatchAnalysisScreen() {
                             {/* Heat Spots (Simulated) */}
                             <LinearGradient
                                 colors={['rgba(239, 68, 68, 0.6)', 'transparent']}
-                                className="absolute top-10 left-12 w-20 h-20 rounded-full"
+                                style={{ position: 'absolute', top: 40, left: 48, width: 80, height: 80, borderRadius: 40 }}
                             />
                             <LinearGradient
                                 colors={['rgba(239, 68, 68, 0.4)', 'transparent']}
-                                className="absolute bottom-12 right-16 w-24 h-24 rounded-full"
+                                style={{ position: 'absolute', bottom: 48, right: 64, width: 96, height: 96, borderRadius: 48 }}
                             />
                         </View>
                         <View className="flex-row items-center gap-2 mt-4">

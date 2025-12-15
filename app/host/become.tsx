@@ -17,7 +17,12 @@ export default function BecomeHostScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={['#84cc16', '#65a30d']}
-          className="mx-5 mt-5 p-6 rounded-2xl"
+          style={{
+            marginHorizontal: 20,
+            marginTop: 20,
+            padding: 24,
+            borderRadius: 16,
+          }}
         >
           <View className="items-center">
             <MaterialIcons name="home-work" size={48} color="#fff" />

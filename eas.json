@@ -30,14 +30,16 @@
         "buildType": "apk"
       },
       "env": {
-        "APP_ENV": "preview"
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS": "138959893910-6910pim9b6v1r6dsism9suthh65u5p2o.apps.googleusercontent.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "APP_ENV": "production",
-        "EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK": "1"
+        "EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK": "1",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS": "138959893910-6910pim9b6v1r6dsism9suthh65u5p2o.apps.googleusercontent.com"
       }
     }
   },
